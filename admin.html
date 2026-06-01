@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · BLE Transaction Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6fb;--card:#ffffff;--ink:#10203a;--mut:#6b7a90;--soft:#9aa7ba;
+    --line:#e6ebf3;--line2:#eef2f8;
+    --teal:#0fb6a0;--teal-d:#0a8f7e;--blue:#2f6bff;--blue-d:#1d4fd1;
+    --indigo:#5b5bf0;--amber:#f5a524;--rose:#f24e6e;--green:#16b364;
+    --grad:linear-gradient(135deg,#2f6bff,#0fb6a0);
+    --shadow:0 1px 2px rgba(16,32,58,.04),0 8px 24px rgba(16,32,58,.06);
+    --shadow-lg:0 12px 40px rgba(16,32,58,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:
+    radial-gradient(1100px 600px at 100% -10%,rgba(47,107,255,.06),transparent 60%),
+    radial-gradient(900px 500px at -5% 0%,rgba(15,182,160,.06),transparent 55%),
+    var(--bg);color:var(--ink);min-height:100vh;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1320px;margin:0 auto}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:4px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{width:52px;height:52px;border-radius:15px;background:var(--grad);display:grid;place-items:center;font-weight:800;color:#fff;font-size:17px;letter-spacing:.5px;box-shadow:0 10px 24px rgba(47,107,255,.30)}
+  h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .titlerow{display:flex;align-items:center;gap:10px}
+  .badge-admin{font-size:10px;font-weight:800;padding:4px 10px;border-radius:30px;background:rgba(47,107,255,.10);color:var(--blue);letter-spacing:.6px}
+  .sub{color:var(--mut);font-size:13.5px;margin:6px 0 22px 68px;max-width:760px;line-height:1.6}
+  .userbox{display:flex;align-items:center;gap:14px}
+  .uinfo{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow)}
+  .uavatar{width:32px;height:32px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+  .uname{font-size:13px;font-weight:700;line-height:1.1}
+  .urole{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-top:2px}
+  .ulink{font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none;padding:9px 14px;border:1.5px solid var(--blue);border-radius:10px;transition:.15s}
+  .ulink:hover{background:var(--blue);color:#fff}
+  .ubtn{font-size:12.5px;font-weight:600;color:var(--mut);background:var(--card);border:1.5px solid var(--line);padding:9px 14px;border-radius:10px;cursor:pointer;font-family:inherit;transition:.15s}
+  .ubtn:hover{border-color:var(--rose);color:var(--rose)}
+
+  body.gate{display:grid;place-items:center}
+  body.gate .wrap{display:none}
+  .gatewrap{text-align:center}
+  .gatewrap .spin{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gatewrap p{color:var(--mut);font-size:13px}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:16px;margin-bottom:24px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+  .stat .ribbon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+  .stat .n{font-size:25px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .stat .l{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-weight:600}
+  .r-blue{background:rgba(47,107,255,.10);color:var(--blue)}
+  .r-teal{background:rgba(15,182,160,.12);color:var(--teal-d)}
+  .r-indigo{background:rgba(91,91,240,.10);color:var(--indigo)}
+  .r-amber{background:rgba(245,165,36,.14);color:#c47e0a}
+  .r-green{background:rgba(22,179,100,.12);color:var(--green)}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:2;margin-bottom:0}
+  .tab{padding:11px 22px;border-radius:12px 12px 0 0;background:transparent;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13.5px;color:var(--mut);font-weight:600;transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{background:var(--card);color:var(--blue);border-color:var(--line);box-shadow:0 -4px 14px rgba(16,32,58,.04)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:0 16px 16px 16px;overflow:hidden;box-shadow:var(--shadow)}
+  .card-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+  .card-head strong{font-size:13.5px;font-weight:700}
+  .head-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+  .search{background:#fff;border:1.5px solid var(--line);color:var(--ink);padding:9px 14px 9px 36px;border-radius:10px;font-size:13px;font-family:inherit;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%239aa7ba' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;width:240px}
+  .search:focus{outline:none;border-color:var(--blue)}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--line);color:var(--ink);padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{border-color:var(--blue);color:var(--blue)}
+  .btn-primary{background:var(--grad);color:#fff;border:none;padding:10px 18px;font-weight:700;box-shadow:0 6px 18px rgba(47,107,255,.25)}
+  .btn-primary:hover{transform:translateY(-1px);color:#fff}
+  .btn-danger{color:var(--rose);border-color:rgba(242,78,110,.30)}
+  .btn-danger:hover{background:var(--rose);color:#fff;border-color:var(--rose)}
+  .btn-sm{padding:5px 9px;font-size:11.5px}
+
+  .tbl-scroll{max-height:600px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:#fafbfe;text-align:left;padding:12px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:700;border-bottom:1.5px solid var(--line);z-index:3}
+  td{padding:12px 16px;border-bottom:1px solid var(--line2)}
+  tbody tr{transition:.1s}
+  tbody tr:hover td{background:#f7f9fe}
+  tbody tr:last-child td{border-bottom:none}
+  .stn{font-weight:600}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .mono{font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--mut)}
+  .chip{font-size:11px;color:var(--mut);background:#f2f5fa;padding:3px 10px;border-radius:20px;white-space:nowrap;font-weight:600}
+  .chip.admin{background:rgba(47,107,255,.10);color:var(--blue)}
+  .chip.user{background:rgba(15,182,160,.12);color:var(--teal-d)}
+  .chip.live{background:rgba(22,179,100,.12);color:var(--green)}
+  .empty{padding:60px;text-align:center;color:var(--soft);font-size:13.5px}
+  .action-cell{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(16,32,58,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);width:100%;max-width:520px;max-height:90vh;overflow:auto}
+  .modal.wide{max-width:1100px}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .modal-head h3{font-size:17px;font-weight:700}
+  .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--mut);font-family:inherit;line-height:1}
+  .modal-close:hover{color:var(--rose)}
+  .modal-body{padding:22px 24px}
+  .modal-foot{padding:14px 24px;border-top:1px solid var(--line2);display:flex;gap:10px;justify-content:flex-end;background:#fafbfe}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+  .field input, .field select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13.5px;font-family:inherit;color:var(--ink);transition:.15s}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--blue)}
+  .msg{padding:10px 13px;border-radius:9px;font-size:12.5px;margin-bottom:12px;display:none}
+  .msg.err{display:block;background:rgba(242,78,110,.10);color:var(--rose);border:1px solid rgba(242,78,110,.20)}
+  .msg.ok{display:block;background:rgba(22,179,100,.10);color:var(--green);border:1px solid rgba(22,179,100,.20)}
+  .msg.info{display:block;background:rgba(47,107,255,.08);color:var(--blue);border:1px solid rgba(47,107,255,.18)}
+
+  /* Sessions inside user drawer */
+  .sessions-head{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);margin:20px 0 10px;font-weight:700}
+  .sess-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .sess-tbl td{padding:9px 12px;border-bottom:1px solid var(--line2)}
+  .sess-tbl thead th{background:transparent;padding:8px 12px}
+
+  /* Reports inside admin view */
+  .report-modal-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line2);margin-bottom:14px}
+  .rmtab{padding:8px 14px;font-size:12px;font-weight:600;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .rmtab.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .siteft{margin-top:32px;padding:14px 4px;color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line2)}
+  .siteft b{color:var(--mut);font-weight:600}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);transition:.3s;z-index:200;opacity:0}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.err{background:var(--rose)}
+  .toast.ok{background:var(--green)}
+
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#d4dce8;border-radius:8px;border:2px solid var(--card)}
+  ::-webkit-scrollbar-thumb:hover{background:#b9c5d6}
+</style>
+</head>
+<body class="gate">
+<div class="gatewrap" id="gate"><div class="spin"></div><p>Verifying admin access…</p></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">BLE</div>
+      <div>
+        <div class="titlerow"><h1>Admin</h1><span class="badge-admin">CONTROL PANEL</span></div>
+        <div style="color:var(--mut);font-size:13px;margin-top:2px">Users, activity, and report management</div>
+      </div>
+    </div>
+    <div class="userbox" id="userbox" style="display:none">
+      <div class="uinfo"><div class="uavatar" id="uavatar">?</div><div><div class="uname" id="uname">…</div><div class="urole" id="urole">user</div></div></div>
+      <a class="ulink" href="./index.html">Dashboard</a>
+      <button class="ubtn" id="logoutbtn">Sign out</button>
+    </div>
+  </header>
+
+  <div id="stats" class="stat-row" style="margin-top:24px"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-t="users">👥 Users</div>
+    <div class="tab" data-t="reports">📊 Reports</div>
+    <div class="tab" data-t="sessions">🕒 Sessions</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <strong id="tabtitle">Team members</strong>
+      <div class="head-actions">
+        <input class="search" id="search" placeholder="Search…">
+        <button class="btn btn-primary" id="add-user-btn" style="display:none">+ Add User</button>
+      </div>
+    </div>
+    <div class="tbl-scroll"><div id="tblhost"></div></div>
+  </div>
+
+  <div class="siteft">Developed by <b>Sunny Gupta</b> &middot; BLE Transaction Tracker &copy; <span id="yr"></span></div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Add New User</h3><button class="modal-close" data-close="add-modal">×</button></div>
+    <div class="modal-body">
+      <div class="msg" id="add-msg"></div>
+      <div class="field"><label>Full Name</label><input id="add-name" type="text" placeholder="e.g. Ravi Kumar"></div>
+      <div class="field"><label>Email</label><input id="add-email" type="email" placeholder="ravi@company.com"></div>
+      <div class="field"><label>Temporary Password</label><input id="add-password" type="text" placeholder="At least 8 characters"></div>
+      <div class="field"><label>Role</label><select id="add-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+      <div style="font-size:11.5px;color:var(--mut);background:#f4f7fc;padding:10px 12px;border-radius:8px;border-left:3px solid var(--blue);line-height:1.5">
+        Share the email and password with the user manually. They can change their password later.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="add-modal">Cancel</button>
+      <button class="btn btn-primary" id="add-confirm">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="edit-title">User Details</h3><button class="modal-close" data-close="edit-modal">×</button></div>
+    <div class="modal-body">
+      <div class="msg" id="edit-msg"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="field"><label>Full Name</label><input id="edit-name" type="text"></div>
+        <div class="field"><label>Email</label><input id="edit-email" type="email" disabled style="background:#f4f7fc;color:var(--mut)"></div>
+        <div class="field"><label>Role</label><select id="edit-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+        <div class="field"><label>New Password (optional)</label><input id="edit-password" type="text" placeholder="Leave blank to keep current"></div>
+      </div>
+      <div class="sessions-head">Recent Sessions</div>
+      <div id="edit-sessions" style="max-height:280px;overflow:auto;border:1px solid var(--line2);border-radius:10px"></div>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between">
+      <button class="btn btn-danger" id="edit-delete">🗑 Delete User</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn" data-close="edit-modal">Close</button>
+        <button class="btn btn-primary" id="edit-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW REPORT MODAL -->
+<div class="modal-bg" id="report-modal">
+  <div class="modal wide" style="max-width:1200px">
+    <div class="modal-head"><h3 id="report-title">Report</h3><button class="modal-close" data-close="report-modal">×</button></div>
+    <div class="modal-body">
+      <div class="report-modal-tabs">
+        <div class="rmtab active" data-rt="final">Final Comparison</div>
+        <div class="rmtab" data-rt="state">State Analysis</div>
+        <div class="rmtab" data-rt="txn">Transaction Report</div>
+        <div class="rmtab" data-rt="cust">Customer Report</div>
+      </div>
+      <div id="report-body" style="max-height:60vh;overflow:auto"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="report-modal">Close</button>
+      <button class="btn btn-primary" id="report-download">⬇ Download Excel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================ */
+/*                          ADMIN PANEL                          */
+/* ============================================================ */
+if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif"><h2>Configuration missing</h2><p>Please create <code>config.js</code></p></div>';
+  throw new Error('Missing Supabase config');
+}
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let CURRENT_USER=null, CURRENT_PROFILE=null;
+const S={users:[],reports:[],sessions:[],cur:'users',currentReport:null,currentReportTab:'final'};
+
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+(async function gate(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='./login.html';return;}
+  CURRENT_USER=session.user;
+  const {data:profile,error}=await sb.from('profiles').select('*').eq('id',CURRENT_USER.id).single();
+  if(error||!profile){await sb.auth.signOut();window.location.href='./login.html';return;}
+  if(profile.role!=='admin'){
+    alert('Access denied — admin only.');
+    window.location.href='./index.html';return;
+  }
+  CURRENT_PROFILE=profile;
+  document.getElementById('uname').textContent=profile.full_name||profile.email.split('@')[0];
+  document.getElementById('urole').textContent=profile.role;
+  document.getElementById('uavatar').textContent=(profile.full_name||profile.email).trim().charAt(0).toUpperCase();
+  document.getElementById('userbox').style.display='flex';
+  document.getElementById('add-user-btn').style.display='inline-flex';
+  document.body.classList.remove('gate');
+  document.getElementById('gate').style.display='none';
+  await loadAll();
+})();
+
+document.getElementById('logoutbtn').onclick=async()=>{await sb.auth.signOut();window.location.href='./login.html';};
+sb.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT')window.location.href='./login.html';});
+
+/* ================== Toast helper ================== */
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type||'')+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ================== Format helpers ================== */
+function fmtHMS(s){s=Math.max(0,Math.floor(s||0));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
+  return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(x).padStart(2,'0')+'s';}
+function fmtDate(d){if(!d)return '—';const x=new Date(d);return x.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtN(n){return (typeof n==='number'?n:0).toLocaleString('en-IN');}
+function escapeHTML(s){return String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function norm(s){return String(s||'').trim().toLowerCase();}
+
+/* ================== Data loading ================== */
+async function loadAll(){
+  await Promise.all([loadUsers(),loadReports(),loadSessions()]);
+  renderStats();render();
+}
+async function loadUsers(){
+  const {data,error}=await sb.rpc('admin_list_users');
+  if(error){toast(error.message,'err');return;}
+  S.users=data||[];
+}
+async function loadReports(){
+  const {data,error}=await sb.rpc('admin_list_reports');
+  if(error){toast(error.message,'err');return;}
+  S.reports=data||[];
+}
+async function loadSessions(){
+  const {data,error}=await sb.from('activity_sessions').select('*,profiles(full_name,email)').order('started_at',{ascending:false}).limit(200);
+  if(error){console.warn(error.message);return;}
+  S.sessions=data||[];
+}
+
+/* ================== Stats cards ================== */
+function renderStats(){
+  const totalUsers=S.users.length;
+  const totalReports=S.reports.length;
+  const totalTime=S.users.reduce((a,b)=>a+(b.month_secs||0),0);
+  const totalToday=S.users.reduce((a,b)=>a+(b.today_secs||0),0);
+  const liveSessions=S.sessions.filter(s=>!s.ended_at).length;
+  const cards=[
+    ['👥','Users',totalUsers,'r-blue'],
+    ['📊','Reports',totalReports,'r-indigo'],
+    ['🟢','Live Sessions',liveSessions,'r-green'],
+    ['⏱','Today (team)',fmtHMS(totalToday),'r-teal'],
+    ['📅','Month (team)',fmtHMS(totalTime),'r-amber']
+  ];
+  document.getElementById('stats').innerHTML=cards.map(c=>
+    '<div class="stat"><div class="ribbon '+c[3]+'">'+c[0]+'</div><div class="n">'+c[2]+'</div><div class="l">'+c[1]+'</div></div>').join('');
+}
+
+/* ================== Tabs ================== */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');S.cur=t.dataset.t;render();
+});
+
+/* ================== Render dispatch ================== */
+function render(){
+  const q=norm(document.getElementById('search').value);
+  document.getElementById('add-user-btn').style.display=S.cur==='users'?'inline-flex':'none';
+  if(S.cur==='users')renderUsers(q);
+  else if(S.cur==='reports')renderReports(q);
+  else renderSessions(q);
+}
+
+function renderUsers(q){
+  document.getElementById('tabtitle').textContent='Team members ('+S.users.length+')';
+  const filt=S.users.filter(u=>!q||norm(u.full_name).includes(q)||norm(u.email).includes(q)||norm(u.role).includes(q));
+  const head='<tr><th>Name</th><th>Email</th><th>Role</th><th>Last Login</th><th class="num">Today</th><th class="num">7 Days</th><th class="num">30 Days</th><th class="num">Reports</th><th></th></tr>';
+  const body=filt.map(u=>{
+    return '<tr><td class="stn">'+escapeHTML(u.full_name)+'</td>'+
+      '<td class="mono">'+escapeHTML(u.email)+'</td>'+
+      '<td><span class="chip '+u.role+'">'+u.role+'</span></td>'+
+      '<td class="mono">'+fmtDate(u.last_login)+'</td>'+
+      '<td class="num">'+fmtHMS(u.today_secs)+'</td>'+
+      '<td class="num">'+fmtHMS(u.week_secs)+'</td>'+
+      '<td class="num">'+fmtHMS(u.month_secs)+'</td>'+
+      '<td class="num">'+fmtN(u.report_count)+'</td>'+
+      '<td class="action-cell"><button class="btn btn-sm" data-edit="'+u.id+'">Edit</button></td></tr>';
+  }).join('');
+  document.getElementById('tblhost').innerHTML='<table><thead>'+head+'</thead><tbody>'+(body||'<tr><td class="empty" colspan="9">No users</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEditUser(b.dataset.edit));
+}
+
+function renderReports(q){
+  document.getElementById('tabtitle').textContent='All reports ('+S.reports.length+')';
+  const filt=S.reports.filter(r=>!q||norm(r.user_name).includes(q)||norm(r.user_email).includes(q));
+  const head='<tr><th>User</th><th>Generated</th><th class="num">Stations</th><th class="num">Transactions</th><th class="num">BLE Mapped</th><th class="num">BLE %</th><th class="num">States</th><th></th></tr>';
+  const body=filt.map(r=>{
+    return '<tr><td><div class="stn">'+escapeHTML(r.user_name)+'</div><div class="mono">'+escapeHTML(r.user_email)+'</div></td>'+
+      '<td class="mono">'+fmtDate(r.created_at)+'</td>'+
+      '<td class="num">'+fmtN(r.station_count)+'</td>'+
+      '<td class="num">'+fmtN(r.txn_total)+'</td>'+
+      '<td class="num">'+fmtN(r.ble_mapped)+'</td>'+
+      '<td class="num">'+(r.ble_pct||0)+'%</td>'+
+      '<td class="num">'+fmtN(r.state_count)+'</td>'+
+      '<td class="action-cell"><button class="btn btn-sm" data-view="'+r.id+'">View</button><button class="btn btn-sm btn-danger" data-del="'+r.id+'">Delete</button></td></tr>';
+  }).join('');
+  document.getElementById('tblhost').innerHTML='<table><thead>'+head+'</thead><tbody>'+(body||'<tr><td class="empty" colspan="8">No reports yet</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>openReport(b.dataset.view));
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteReport(b.dataset.del));
+}
+
+function renderSessions(q){
+  document.getElementById('tabtitle').textContent='Activity sessions ('+S.sessions.length+')';
+  const filt=S.sessions.filter(s=>!q||norm(s.profiles?.full_name).includes(q)||norm(s.profiles?.email).includes(q));
+  const head='<tr><th>User</th><th>Started</th><th>Ended</th><th class="num">Active Time</th><th>Status</th></tr>';
+  const body=filt.map(s=>{
+    const nm=s.profiles?.full_name||'(unknown)';
+    const em=s.profiles?.email||'';
+    const status=s.ended_at?'Ended':'<span class="chip live">● Live</span>';
+    return '<tr><td><div class="stn">'+escapeHTML(nm)+'</div><div class="mono">'+escapeHTML(em)+'</div></td>'+
+      '<td class="mono">'+fmtDate(s.started_at)+'</td>'+
+      '<td class="mono">'+(s.ended_at?fmtDate(s.ended_at):'—')+'</td>'+
+      '<td class="num">'+fmtHMS(s.active_seconds)+'</td>'+
+      '<td>'+status+'</td></tr>';
+  }).join('');
+  document.getElementById('tblhost').innerHTML='<table><thead>'+head+'</thead><tbody>'+(body||'<tr><td class="empty" colspan="5">No sessions yet</td></tr>')+'</tbody></table>';
+}
+
+document.getElementById('search').oninput=render;
+
+/* ================== Modal helpers ================== */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open');});
+
+/* ================== Add User ================== */
+document.getElementById('add-user-btn').onclick=()=>{
+  ['add-name','add-email','add-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-role').value='user';
+  document.getElementById('add-msg').className='msg';
+  openModal('add-modal');
+};
+
+document.getElementById('add-confirm').onclick=async()=>{
+  const msg=document.getElementById('add-msg');msg.className='msg';
+  const full_name=document.getElementById('add-name').value.trim();
+  const email=document.getElementById('add-email').value.trim();
+  const password=document.getElementById('add-password').value;
+  const role=document.getElementById('add-role').value;
+  if(!full_name||!email||!password){msg.className='msg err';msg.textContent='Please fill all fields.';return;}
+  if(password.length<8){msg.className='msg err';msg.textContent='Password must be at least 8 characters.';return;}
+  const btn=document.getElementById('add-confirm');btn.disabled=true;btn.textContent='Creating…';
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    const res=await fetch(SUPABASE_URL+'/functions/v1/create-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({email,password,full_name,role})
+    });
+    const j=await res.json();
+    if(!res.ok)throw new Error(j.error||'Failed');
+    msg.className='msg ok';msg.textContent='User created. Share credentials manually.';
+    await loadUsers();renderStats();render();
+    setTimeout(()=>closeModal('add-modal'),1100);
+  }catch(err){msg.className='msg err';msg.textContent=err.message;}
+  btn.disabled=false;btn.textContent='Create User';
+};
+
+/* ================== Edit User ================== */
+let editingUserId=null;
+async function openEditUser(uid){
+  editingUserId=uid;
+  const u=S.users.find(x=>x.id===uid);if(!u)return;
+  document.getElementById('edit-title').textContent='User: '+u.full_name;
+  document.getElementById('edit-name').value=u.full_name||'';
+  document.getElementById('edit-email').value=u.email||'';
+  document.getElementById('edit-role').value=u.role||'user';
+  document.getElementById('edit-password').value='';
+  document.getElementById('edit-msg').className='msg';
+  // disable delete-self
+  document.getElementById('edit-delete').style.display=(uid===CURRENT_USER.id)?'none':'inline-flex';
+  // load sessions for this user
+  document.getElementById('edit-sessions').innerHTML='<div class="empty" style="padding:30px">Loading sessions…</div>';
+  openModal('edit-modal');
+  const {data,error}=await sb.rpc('admin_list_sessions',{p_user_id:uid});
+  if(error){document.getElementById('edit-sessions').innerHTML='<div class="empty">Could not load sessions</div>';return;}
+  if(!data||!data.length){document.getElementById('edit-sessions').innerHTML='<div class="empty">No sessions yet</div>';return;}
+  const head='<tr><th>Started</th><th>Ended</th><th class="num">Active</th><th>Status</th></tr>';
+  const body=data.map(s=>'<tr><td class="mono">'+fmtDate(s.started_at)+'</td><td class="mono">'+(s.ended_at?fmtDate(s.ended_at):'—')+'</td><td class="num">'+fmtHMS(s.active_seconds)+'</td><td>'+(s.ended_at?'Ended':'<span class="chip live">● Live</span>')+'</td></tr>').join('');
+  document.getElementById('edit-sessions').innerHTML='<table class="sess-tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+}
+
+document.getElementById('edit-save').onclick=async()=>{
+  const msg=document.getElementById('edit-msg');msg.className='msg';
+  const full_name=document.getElementById('edit-name').value.trim();
+  const role=document.getElementById('edit-role').value;
+  const new_password=document.getElementById('edit-password').value;
+  if(!full_name){msg.className='msg err';msg.textContent='Name cannot be empty.';return;}
+  if(new_password && new_password.length<8){msg.className='msg err';msg.textContent='Password must be at least 8 characters.';return;}
+  const btn=document.getElementById('edit-save');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    // 1. Update profile (RPC)
+    const {error:e1}=await sb.rpc('admin_update_user',{p_user_id:editingUserId,p_full_name:full_name,p_role:role});
+    if(e1)throw e1;
+    // 2. Optional password reset
+    if(new_password){
+      const {data:{session}}=await sb.auth.getSession();
+      const res=await fetch(SUPABASE_URL+'/functions/v1/reset-password',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({user_id:editingUserId,new_password})
+      });
+      const j=await res.json();if(!res.ok)throw new Error(j.error||'Password update failed');
+    }
+    msg.className='msg ok';msg.textContent='Saved.';
+    await loadUsers();renderStats();render();
+    setTimeout(()=>closeModal('edit-modal'),900);
+  }catch(err){msg.className='msg err';msg.textContent=err.message;}
+  btn.disabled=false;btn.textContent='Save Changes';
+};
+
+document.getElementById('edit-delete').onclick=async()=>{
+  const u=S.users.find(x=>x.id===editingUserId);if(!u)return;
+  if(!confirm('Delete user "'+u.full_name+'" ('+u.email+')?\n\nThis removes their account, sessions, activity history, and all reports they generated. This cannot be undone.'))return;
+  const btn=document.getElementById('edit-delete');btn.disabled=true;btn.textContent='Deleting…';
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    const res=await fetch(SUPABASE_URL+'/functions/v1/delete-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({user_id:editingUserId})
+    });
+    const j=await res.json();if(!res.ok)throw new Error(j.error||'Delete failed');
+    closeModal('edit-modal');toast('User deleted','ok');
+    await loadAll();
+  }catch(err){toast(err.message,'err');btn.disabled=false;btn.textContent='🗑 Delete User';}
+};
+
+/* ================== View Report ================== */
+async function openReport(reportId){
+  S.currentReport=null;S.currentReportTab='final';
+  document.getElementById('report-title').textContent='Loading…';
+  document.getElementById('report-body').innerHTML='<div class="empty">Loading report…</div>';
+  openModal('report-modal');
+  const {data,error}=await sb.rpc('admin_get_report',{p_report_id:reportId});
+  if(error){document.getElementById('report-body').innerHTML='<div class="empty">'+error.message+'</div>';return;}
+  const r=Array.isArray(data)?data[0]:data;if(!r){document.getElementById('report-body').innerHTML='<div class="empty">Not found</div>';return;}
+  S.currentReport=r;
+  document.getElementById('report-title').textContent='Report by '+r.user_name+' · '+fmtDate(r.created_at);
+  renderReportTab();
+}
+document.querySelectorAll('.rmtab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.rmtab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');S.currentReportTab=t.dataset.rt;renderReportTab();
+});
+function renderReportTab(){
+  if(!S.currentReport)return;
+  const tab=S.currentReportTab;const r=S.currentReport;
+  let arr,cols;
+  if(tab==='final'){arr=r.data_final||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %']];}
+  else if(tab==='state'){arr=r.data_state||[];cols=[['state','State'],['stations','Stations'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %']];}
+  else if(tab==='txn'){arr=r.data_txn||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile']];}
+  else{arr=r.data_cust||[];cols=[['station','Station'],['state','State'],['count','Mobile Txns']];}
+  const numKeys=['txn','mob','custMob','pct','count','stations'];
+  const head='<tr>'+cols.map(c=>'<th class="'+(numKeys.includes(c[0])?'num':'')+'" style="'+(numKeys.includes(c[0])?'text-align:right':'')+'">'+c[1]+'</th>').join('')+'</tr>';
+  const body=arr.map(row=>'<tr>'+cols.map(c=>{
+    const v=row[c[0]];const isNum=numKeys.includes(c[0]);
+    if(c[0]==='pct')return '<td class="num">'+(typeof v==='number'?v.toFixed(1):'—')+'%</td>';
+    return '<td '+(isNum?'class="num"':'')+'>'+escapeHTML(v||'')+'</td>';
+  }).join('')+'</tr>').join('');
+  document.getElementById('report-body').innerHTML='<table>'+'<thead>'+head+'</thead><tbody>'+(body||'<tr><td class="empty" colspan="9">No rows in this tab</td></tr>')+'</tbody></table>';
+}
+
+document.getElementById('report-download').onclick=()=>{
+  if(!S.currentReport)return;
+  const r=S.currentReport;
+  const wb=XLSX.utils.book_new();
+  if(r.data_final?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_final),'Final');
+  if(r.data_state?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_state),'State');
+  if(r.data_txn?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_txn),'Transaction');
+  if(r.data_cust?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_cust),'Customer');
+  const stamp=new Date(r.created_at).toISOString().slice(0,10);
+  XLSX.writeFile(wb,'BLE_Report_'+r.user_name.replace(/\s+/g,'_')+'_'+stamp+'.xlsx');
+};
+
+async function deleteReport(rid){
+  const r=S.reports.find(x=>x.id===rid);if(!r)return;
+  if(!confirm('Delete this report by '+r.user_name+' from '+fmtDate(r.created_at)+'? This cannot be undone.'))return;
+  const {error}=await sb.from('reports').delete().eq('id',rid);
+  if(error){toast(error.message,'err');return;}
+  toast('Report deleted','ok');
+  await loadReports();renderStats();render();
+}
+</script>
+</body>
+</html>
