@@ -80,7 +80,6 @@
   .head-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
   .dl{background:var(--ink);color:#fff;border-color:var(--ink)}
   .dl:hover{background:#1d3358;color:#fff;border-color:#1d3358}
-  /* column picker */
   .colpick{position:relative}
   .colmenu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:12px;width:250px;z-index:20;display:none}
   .colmenu.open{display:block}
@@ -134,7 +133,6 @@
   .barcell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
   .bar{height:7px;border-radius:5px;background:var(--line);width:74px;overflow:hidden;flex-shrink:0}
   .bar i{display:block;height:100%;border-radius:5px;background:var(--grad)}
-  /* state analysis */
   .strow{cursor:pointer}
   .strow td{font-weight:700}
   .stname{display:flex;align-items:center;gap:9px}
@@ -149,9 +147,7 @@
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-thumb{background:#d4dce8;border-radius:8px;border:2px solid var(--card)}
   ::-webkit-scrollbar-thumb:hover{background:#b9c5d6}
-
   header{justify-content:space-between}
-
   .timer{display:flex;align-items:center;gap:9px;padding:8px 13px;background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);transition:.2s}
   .timer .dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(22,179,100,.18);transition:.3s}
   .timer.idle .dot{background:#b9c5d6;box-shadow:0 0 0 3px rgba(185,197,214,.25)}
@@ -160,7 +156,6 @@
   .timer.idle .tval{color:var(--mut)}
   .uinfo{cursor:pointer}
   .uinfo:hover{border-color:var(--blue)}
-  /* user-panel popover */
   .upanel{position:fixed;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:18px;width:290px;z-index:60;display:none}
   .upanel.open{display:block}
   .upanel h6{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);margin-bottom:14px;font-weight:700}
@@ -267,17 +262,13 @@
 </div>
 <div class="fpop" id="fpop"></div>
 <script>
-
-/* ============================================================
-   AUTH GATE — runs before everything else
-   ============================================================ */
+/* AUTH GATE */
 if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
-  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#10203a"><h2>Configuration missing</h2><p>Please create <code>config.js</code> with your Supabase URL and anon key. See <code>config.example.js</code>.</p></div>';
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#10203a"><h2>Configuration missing</h2><p>Please create <code>config.js</code> with your Supabase URL and anon key.</p></div>';
   throw new Error('Missing Supabase config');
 }
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let CURRENT_USER=null,CURRENT_PROFILE=null;
-
 (async function authGate(){
   document.getElementById('yr').textContent=new Date().getFullYear();
   const {data:{session}}=await sb.auth.getSession();
@@ -286,7 +277,6 @@ let CURRENT_USER=null,CURRENT_PROFILE=null;
   const {data:profile,error}=await sb.from('profiles').select('*').eq('id',CURRENT_USER.id).single();
   if(error||!profile){alert('Could not load your profile. Please sign in again.');await sb.auth.signOut();window.location.href='./login.html';return;}
   CURRENT_PROFILE=profile;
-  // populate UI
   document.getElementById('uname').textContent=profile.full_name||profile.email.split('@')[0];
   document.getElementById('urole').textContent=profile.role;
   document.getElementById('uavatar').textContent=(profile.full_name||profile.email).trim().charAt(0).toUpperCase();
@@ -295,205 +285,95 @@ let CURRENT_USER=null,CURRENT_PROFILE=null;
   document.body.classList.remove('gate');
   document.getElementById('gate').style.display='none';
 })();
-
 document.getElementById('logoutbtn').onclick=async()=>{await sb.auth.signOut();window.location.href='./login.html';};
-
-// auto-redirect on signout from another tab
 sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')window.location.href='./login.html';});
 
-/* ============================================================
-   STEP B — ACTIVITY TIMER + IDLE DETECTION
-   ============================================================ */
-const IDLE_LIMIT_MS = 5*60*1000;  // 5 minutes
-const SYNC_INTERVAL_MS = 30*1000; // 30 seconds
-const ACTIVITY_EVENTS = ['mousemove','keydown','scroll','click','touchstart','wheel'];
-let actSecondsTotal = 0;          // today's total (loaded from DB + accumulated)
-let pendingDelta = 0;             // unsynced seconds
-let lastActivityAt = Date.now();
-let isIdle = false;
-let sessionId = null;
-let dayKey = null;                // YYYY-MM-DD in IST
-let timerTickHandle = null;
-let syncHandle = null;
-
-function fmtHMS(s){s=Math.max(0,Math.floor(s));
-  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
+/* ACTIVITY TIMER */
+const IDLE_LIMIT_MS=5*60*1000;
+const SYNC_INTERVAL_MS=30*1000;
+const ACTIVITY_EVENTS=['mousemove','keydown','scroll','click','touchstart','wheel'];
+let actSecondsTotal=0,pendingDelta=0,lastActivityAt=Date.now(),isIdle=false,sessionId=null,dayKey=null;
+function fmtHMS(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;
   return String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(x).padStart(2,'0')+'s';}
-
-function getISTDayKey(){
-  // Convert now to IST date YYYY-MM-DD
-  const now=new Date();
-  const ist=new Date(now.getTime()+(now.getTimezoneOffset()*60000)+(330*60000));
-  return ist.getFullYear()+'-'+String(ist.getMonth()+1).padStart(2,'0')+'-'+String(ist.getDate()).padStart(2,'0');
-}
-
-function updateTimerUI(){
-  document.getElementById('tval').textContent=fmtHMS(actSecondsTotal);
-  document.getElementById('tlab').textContent=isIdle?'Idle':'Active';
-  document.getElementById('timer').classList.toggle('idle',isIdle);
-}
-
-function markActive(){
-  lastActivityAt=Date.now();
-  if(isIdle){isIdle=false;updateTimerUI();}
-}
-
-function tick(){
-  // If no activity for >IDLE_LIMIT_MS, become idle
-  if(!isIdle && (Date.now()-lastActivityAt)>IDLE_LIMIT_MS){
-    isIdle=true; updateTimerUI(); return;
-  }
-  if(!isIdle){
-    // Day rollover check (IST midnight) — if day changed, reset local total
-    const today=getISTDayKey();
-    if(dayKey && today!==dayKey){actSecondsTotal=0;}
-    dayKey=today;
-    actSecondsTotal++; pendingDelta++;
-    updateTimerUI();
-  }
-}
-
-async function syncNow(useBeacon){
-  if(pendingDelta<=0)return;
-  const delta=pendingDelta; pendingDelta=0;
-  try{
-    // Bump daily total
-    await sb.rpc('bump_activity',{seconds_delta:delta});
-    // Bump session row
-    if(sessionId) await sb.rpc('bump_session',{p_session_id:sessionId,seconds_delta:delta});
-  }catch(err){
-    // restore the delta so we try again next time
-    pendingDelta+=delta;
-    console.warn('Activity sync failed, will retry:',err);
-  }
-}
-
-async function initActivityTracking(){
-  dayKey=getISTDayKey();
-  // 1) load today's existing total so the timer starts from the right number
-  try{
-    const {data}=await sb.rpc('my_time_today');
-    if(typeof data==='number') actSecondsTotal=data;
-  }catch(err){console.warn('Could not load today total',err);}
-  // 2) create a new session row
-  try{
-    const {data,error}=await sb.from('activity_sessions').insert({user_id:CURRENT_USER.id,active_seconds:0}).select('id').single();
-    if(!error && data) sessionId=data.id;
-  }catch(err){console.warn('Could not create session',err);}
-  // 3) wire up activity listeners
+function getISTDayKey(){const now=new Date();const ist=new Date(now.getTime()+(now.getTimezoneOffset()*60000)+(330*60000));
+  return ist.getFullYear()+'-'+String(ist.getMonth()+1).padStart(2,'0')+'-'+String(ist.getDate()).padStart(2,'0');}
+function updateTimerUI(){document.getElementById('tval').textContent=fmtHMS(actSecondsTotal);
+  document.getElementById('tlab').textContent=isIdle?'Idle':'Active';document.getElementById('timer').classList.toggle('idle',isIdle);}
+function markActive(){lastActivityAt=Date.now();if(isIdle){isIdle=false;updateTimerUI();}}
+function tick(){if(!isIdle&&(Date.now()-lastActivityAt)>IDLE_LIMIT_MS){isIdle=true;updateTimerUI();return;}
+  if(!isIdle){const today=getISTDayKey();if(dayKey&&today!==dayKey){actSecondsTotal=0;}dayKey=today;actSecondsTotal++;pendingDelta++;updateTimerUI();}}
+async function syncNow(){if(pendingDelta<=0)return;const delta=pendingDelta;pendingDelta=0;
+  try{await sb.rpc('bump_activity',{seconds_delta:delta});if(sessionId)await sb.rpc('bump_session',{p_session_id:sessionId,seconds_delta:delta});
+  }catch(err){pendingDelta+=delta;console.warn('Activity sync failed:',err);}}
+async function initActivityTracking(){dayKey=getISTDayKey();
+  try{const {data}=await sb.rpc('my_time_today');if(typeof data==='number')actSecondsTotal=data;}catch(err){console.warn('load today total',err);}
+  try{const {data,error}=await sb.from('activity_sessions').insert({user_id:CURRENT_USER.id,active_seconds:0}).select('id').single();
+    if(!error&&data)sessionId=data.id;}catch(err){console.warn('session create',err);}
   ACTIVITY_EVENTS.forEach(ev=>window.addEventListener(ev,markActive,{passive:true}));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markActive();});
-  // 4) start tick + sync loops
-  updateTimerUI();
-  timerTickHandle=setInterval(tick,1000);
-  syncHandle=setInterval(syncNow,SYNC_INTERVAL_MS);
-  // 5) final sync on page unload (try beacon for reliability)
-  window.addEventListener('beforeunload',()=>{
-    if(pendingDelta>0){
-      // best-effort sync; not always reliable but the 30s loop covers most loss
-      syncNow(true);
-    }
-    if(sessionId){
-      try{sb.rpc('end_session',{p_session_id:sessionId});}catch(_){}
-    }
-  });
-}
-
-/* ---- User-panel popover ---- */
-async function openUserPanel(){
-  const pop=document.getElementById('upanel');
+  updateTimerUI();setInterval(tick,1000);setInterval(syncNow,SYNC_INTERVAL_MS);
+  window.addEventListener('beforeunload',()=>{if(pendingDelta>0)syncNow();
+    if(sessionId){try{sb.rpc('end_session',{p_session_id:sessionId});}catch(_){}}});}
+async function openUserPanel(){const pop=document.getElementById('upanel');
   const r=document.getElementById('uinfo').getBoundingClientRect();
-  pop.style.top=(r.bottom+8)+'px';
-  pop.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-300))+'px';
-  pop.classList.add('open');
-  // Flush any pending so numbers are fresh, then load summary
-  await syncNow();
-  try{
-    const {data}=await sb.rpc('my_time_summary');
-    const row=Array.isArray(data)?data[0]:data;
-    if(row){
-      document.getElementById('us-today').textContent=fmtHMS(row.today_secs||0);
+  pop.style.top=(r.bottom+8)+'px';pop.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-300))+'px';
+  pop.classList.add('open');await syncNow();
+  try{const {data}=await sb.rpc('my_time_summary');const row=Array.isArray(data)?data[0]:data;
+    if(row){document.getElementById('us-today').textContent=fmtHMS(row.today_secs||0);
       document.getElementById('us-week').textContent=fmtHMS(row.week_secs||0);
-      document.getElementById('us-month').textContent=fmtHMS(row.month_secs||0);
-    }
-  }catch(err){console.warn('summary load failed',err);}
-}
-document.addEventListener('click',e=>{
-  const pop=document.getElementById('upanel');const info=document.getElementById('uinfo');
+      document.getElementById('us-month').textContent=fmtHMS(row.month_secs||0);}
+  }catch(err){console.warn('summary',err);}}
+document.addEventListener('click',e=>{const pop=document.getElementById('upanel');const info=document.getElementById('uinfo');
   if(!pop||!info)return;
   if(info.contains(e.target)){pop.classList.contains('open')?pop.classList.remove('open'):openUserPanel();}
-  else if(!pop.contains(e.target))pop.classList.remove('open');
-});
-
-/* Start tracking once profile is loaded — we hook into the authGate flow by polling
-   for CURRENT_USER which is set inside the IIFE. */
-const _trackStart=setInterval(()=>{
-  if(CURRENT_USER){clearInterval(_trackStart);initActivityTracking();}
-},150);
-
+  else if(!pop.contains(e.target))pop.classList.remove('open');});
+const _trackStart=setInterval(()=>{if(CURRENT_USER){clearInterval(_trackStart);initActivityTracking();}},150);
 
 /* ============================================================
-   STATION MASTER — BLE Installation + Isolator status
-   312 ERPs as of latest master update.
+   STATION MASTER — 312 ERPs (updated)
+   BLE Yes: 146, Iso Yes: 109
    Schema: n=Station Name, s=State, b=BLE (Y/N), i=Isolator (Y/N)
    ============================================================ */
-const MASTER={"AA006":{"n":"Ahmednagar","s":"Maharashtra","b":"N","i":"N"},"AA014":{"n":"Ahmednagar-Bholegaon","s":"Maharashtra","b":"N","i":"N"},"AC008":{"n":"Aurangabad-Chikalthana","s":"Maharashtra","b":"N","i":"N"},"AB016":{"n":"Aurangabad Beed Byepass","s":"Maharashtra","b":"Y","i":"Y"},"AK022":{"n":"Aurangabad Kanchanwadi","s":"Maharashtra","b":"N","i":"N"},"AY018":{"n":"Aurangabad South City","s":"Maharashtra","b":"N","i":"N"},"AY006":{"n":"Dhule","s":"Maharashtra","b":"Y","i":"Y"},"AY126":{"n":"Dhule Deopur","s":"Maharashtra","b":"Y","i":"N"},"AY033":{"n":"Manmad","s":"Maharashtra","b":"N","i":"N"},"AY060":{"n":"Niphad JODO","s":"Maharashtra","b":"N","i":"N"},"AY017":{"n":"Parbhani - New","s":"Maharashtra","b":"N","i":"N"},"AY002":{"n":"Yeola JODO - LOCO","s":"Maharashtra","b":"N","i":"N"},"AO001":{"n":"Ozar","s":"Maharashtra","b":"N","i":"N"},"AN013":{"n":"Nashik Adgaon","s":"Maharashtra","b":"Y","i":"Y"},"AY019":{"n":"Nashik Dwarka","s":"Maharashtra","b":"Y","i":"Y"},"AY087":{"n":"Nashik Satpur","s":"Maharashtra","b":"N","i":"N"},"AY096":{"n":"Ambaad Satpur","s":"Maharashtra","b":"N","i":"N"},"AY100":{"n":"Nashik Lam Road","s":"Maharashtra","b":"N","i":"N"},"AB022":{"n":"Bhusawal","s":"Maharashtra","b":"N","i":"N"},"AY027":{"n":"Jalna","s":"Maharashtra","b":"N","i":"N"},"AY084":{"n":"Sangamner","s":"Maharashtra","b":"N","i":"N"},"AY116":{"n":"Basmat","s":"Maharashtra","b":"N","i":"N"},"AY125":{"n":"Parbhani Pathri","s":"Maharashtra","b":"N","i":"N"},"AY118":{"n":"Bang Channasandra","s":"Karnataka","b":"Y","i":"Y"},"AY120":{"n":"Baramati New","s":"Maharashtra","b":"N","i":"N"},"AB004":{"n":"Barshi","s":"Maharashtra","b":"N","i":"N"},"AK002":{"n":"Kolhapur","s":"Maharashtra","b":"N","i":"N"},"AY127":{"n":"Kolhapur - City","s":"Maharashtra","b":"N","i":"N"},"AP008":{"n":"Pandharpur","s":"Maharashtra","b":"N","i":"N"},"AI003":{"n":"Indapur-JODO- LOCO","s":"Maharashtra","b":"N","i":"N"},"AP002":{"n":"Palus","s":"Maharashtra","b":"N","i":"N"},"AD005":{"n":"Bang Devanahalli","s":"Karnataka","b":"Y","i":"Y"},"AS001":{"n":"Solapur","s":"Maharashtra","b":"N","i":"N"},"AS114":{"n":"Solapur - 2","s":"Maharashtra","b":"N","i":"N"},"AY099":{"n":"Solapur - 3 Majrewadi","s":"Maharashtra","b":"N","i":"N"},"AY009":{"n":"Karmala JOCO","s":"Maharashtra","b":"N","i":"N"},"AL005":{"n":"Latur Ambejogai Road","s":"Maharashtra","b":"Y","i":"Y"},"JODO2":{"n":"Nanded JODO","s":"Maharashtra","b":"N","i":"N"},"AY038":{"n":"Karad","s":"Maharashtra","b":"N","i":"N"},"AY049":{"n":"Satara","s":"Maharashtra","b":"N","i":"N"},"AY003":{"n":"Bang Yellahanka","s":"Karnataka","b":"Y","i":"Y"},"AY036":{"n":"Chikaballapur","s":"Karnataka","b":"Y","i":"Y"},"AY130":{"n":"Jangamkotte","s":"Karnataka","b":"N","i":"Y"},"AY139":{"n":"Tumkur-2","s":"Karnataka","b":"Y","i":"Y"},"AY111":{"n":"Jabalpur Adhartal","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ007":{"n":"Jabalpur Durgavati","s":"Madhya Pradesh","b":"Y","i":"Y"},"AY108":{"n":"Jabalpur Karmeta","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ005":{"n":"Jabalpur Laxmipur","s":"Madhya Pradesh","b":"Y","i":"Y"},"AA013":{"n":"Akola Nandu","s":"Maharashtra","b":"Y","i":"Y"},"AA012":{"n":"Amrawati - Sunderlal","s":"Maharashtra","b":"Y","i":"Y"},"AB010":{"n":"Bang Banaswadi","s":"Karnataka","b":"N","i":"N"},"JODO6":{"n":"Bang Banergatta JODO","s":"Karnataka","b":"N","i":"N"},"AB001":{"n":"Baramati","s":"Maharashtra","b":"Y","i":"N"},"AY081":{"n":"Bang Kariyanpalayam - (Lingarajpura)","s":"Karnataka","b":"Y","i":"Y"},"JODO11":{"n":"Bang Katrigupe JODO","s":"Karnataka","b":"N","i":"N"},"AL001":{"n":"Bang Lalbaugh","s":"Karnataka","b":"Y","i":"Y"},"AY043":{"n":"Bang Mahadevpura","s":"Karnataka","b":"Y","i":"Y"},"AY031":{"n":"Bang Nandidurga","s":"Karnataka","b":"N","i":"N"},"AN011":{"n":"Bang Nayandahalli","s":"Karnataka","b":"Y","i":"Y"},"AN012":{"n":"Bang Neelamangala","s":"Karnataka","b":"N","i":"N"},"AY037":{"n":"Nagpur Hingana","s":"Maharashtra","b":"Y","i":"Y"},"AY082":{"n":"Bang Yeshwantpura","s":"Karnataka","b":"Y","i":"Y"},"AJ003":{"n":"Bang JP Nagar","s":"Karnataka","b":"Y","i":"Y"},"AI002":{"n":"Nagpur Imambada","s":"Maharashtra","b":"Y","i":"Y"},"AY129":{"n":"Bang Konankunte","s":"Karnataka","b":"Y","i":"Y"},"AY123":{"n":"Bang Whitefield","s":"Karnataka","b":"Y","i":"Y"},"AB019":{"n":"Bengarpet","s":"Karnataka","b":"N","i":"N"},"AK001":{"n":"Nagpur Kamptee Rd - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AD006":{"n":"Dodaballapur","s":"Karnataka","b":"N","i":"N"},"AY054":{"n":"Kanakapura LOCO","s":"Karnataka","b":"N","i":"N"},"AK020":{"n":"KGF","s":"Karnataka","b":"N","i":"N"},"AM006":{"n":"Mulbagal","s":"Karnataka","b":"N","i":"N"},"AY103":{"n":"Aland JOCO","s":"Karnataka","b":"N","i":"N"},"AY052":{"n":"Belgavi JOCO","s":"Karnataka","b":"N","i":"N"},"JODO9":{"n":"Belgavi JODO","s":"Karnataka","b":"N","i":"N"},"AD004":{"n":"Dharwad","s":"Karnataka","b":"N","i":"N"},"AY026":{"n":"Dharwad - New","s":"Karnataka","b":"N","i":"N"},"AG001":{"n":"Gadag","s":"Karnataka","b":"N","i":"N"},"AG004":{"n":"Gulbarga Ring Road","s":"Karnataka","b":"N","i":"N"},"AY102":{"n":"Gulbarga Fort","s":"Karnataka","b":"N","i":"N"},"AH013":{"n":"Hangal","s":"Karnataka","b":"N","i":"N"},"AH006":{"n":"Haveri","s":"Karnataka","b":"N","i":"N"},"AH012":{"n":"Hubbali Anand Nagar","s":"Karnataka","b":"N","i":"N"},"JODO7":{"n":"Hubbali New JODO","s":"Karnataka","b":"N","i":"N"},"AH004":{"n":"Hubbali Old","s":"Karnataka","b":"N","i":"N"},"AY012":{"n":"Lakshmeshwar","s":"Karnataka","b":"N","i":"N"},"AN014":{"n":"Nippani","s":"Karnataka","b":"N","i":"N"},"AR001":{"n":"Raichur","s":"Karnataka","b":"N","i":"N"},"AY005":{"n":"Sindhanoor","s":"Karnataka","b":"N","i":"N"},"AB017":{"n":"Bhadrawati","s":"Karnataka","b":"N","i":"N"},"AC009":{"n":"Channagiri","s":"Karnataka","b":"N","i":"N"},"AH010":{"n":"Hosdurga","s":"Karnataka","b":"N","i":"N"},"AS016":{"n":"Sagara","s":"Karnataka","b":"N","i":"N"},"AS004":{"n":"Shimoga","s":"Karnataka","b":"N","i":"N"},"AT011":{"n":"Teerathali","s":"Karnataka","b":"N","i":"N"},"AC007":{"n":"Channaraypatna","s":"Karnataka","b":"N","i":"N"},"AC003":{"n":"Chikamaglur","s":"Karnataka","b":"N","i":"N"},"AH005":{"n":"Hassan","s":"Karnataka","b":"N","i":"N"},"AY057":{"n":"Hassan 2 New","s":"Karnataka","b":"N","i":"N"},"AM009":{"n":"Malavalli","s":"Karnataka","b":"N","i":"N"},"AM002":{"n":"Mysore Nie","s":"Karnataka","b":"Y","i":"Y"},"AN007":{"n":"Nanjangud","s":"Karnataka","b":"Y","i":"Y"},"AT017":{"n":"T Narsipura","s":"Karnataka","b":"N","i":"N"},"AY098":{"n":"Bellary 2","s":"Karnataka","b":"N","i":"N"},"AY090":{"n":"Bhatkal","s":"Karnataka","b":"N","i":"N"},"AY066":{"n":"Hebri - JOCO","s":"Karnataka","b":"N","i":"N"},"AY095":{"n":"K R Pete","s":"Karnataka","b":"N","i":"N"},"AY097":{"n":"Kumta","s":"Karnataka","b":"N","i":"N"},"AY041":{"n":"Ankola","s":"Karnataka","b":"N","i":"N"},"AA002":{"n":"Arsikere","s":"Karnataka","b":"N","i":"N"},"AG008":{"n":"Gubbi","s":"Karnataka","b":"N","i":"N"},"AK019":{"n":"Karwar","s":"Karnataka","b":"N","i":"N"},"AY050":{"n":"Kinnigoli","s":"Karnataka","b":"N","i":"N"},"AM003":{"n":"Madhugiri","s":"Karnataka","b":"N","i":"N"},"AM004":{"n":"Mangalore","s":"Karnataka","b":"N","i":"N"},"AP011":{"n":"Puttur","s":"Karnataka","b":"N","i":"N"},"AY034":{"n":"Rayee","s":"Karnataka","b":"N","i":"N"},"AS015":{"n":"Sastana","s":"Karnataka","b":"N","i":"N"},"AS005":{"n":"Sira","s":"Karnataka","b":"N","i":"N"},"AS006":{"n":"Sirsi","s":"Karnataka","b":"N","i":"N"},"AT004":{"n":"Tiptur","s":"Karnataka","b":"N","i":"N"},"AT002":{"n":"Tumkur","s":"Karnataka","b":"Y","i":"Y"},"AY051":{"n":"Udupi - 2 New","s":"Karnataka","b":"N","i":"N"},"JODO8":{"n":"Udupi JODO","s":"Karnataka","b":"N","i":"N"},"AV006":{"n":"Vitla","s":"Karnataka","b":"N","i":"N"},"JODO10":{"n":"Kundapur JODO","s":"Karnataka","b":"N","i":"N"},"AB100":{"n":"Bellary","s":"Karnataka","b":"N","i":"N"},"AD002":{"n":"Davangere","s":"Karnataka","b":"N","i":"N"},"AH011":{"n":"Harihara","s":"Karnataka","b":"N","i":"N"},"AB021":{"n":"Harpanahalli","s":"Karnataka","b":"N","i":"N"},"AY016":{"n":"Hosepet","s":"Karnataka","b":"N","i":"N"},"AK017":{"n":"Koppal","s":"Karnataka","b":"N","i":"N"},"AR005":{"n":"Ranebennur","s":"Karnataka","b":"N","i":"N"},"AY107":{"n":"Belur","s":"Karnataka","b":"N","i":"N"},"AY110":{"n":"Gangawati","s":"Karnataka","b":"N","i":"N"},"AY113":{"n":"Kumbra","s":"Karnataka","b":"N","i":"N"},"AY109":{"n":"Mudipu","s":"Karnataka","b":"N","i":"N"},"AY112":{"n":"SINDAGI","s":"Karnataka","b":"N","i":"N"},"AY117":{"n":"Bidar","s":"Karnataka","b":"N","i":"N"},"AY147":{"n":"Challakere DODO - LOCO","s":"Karnataka","b":"N","i":"N"},"AY124":{"n":"Shimoga Bommankatte","s":"Karnataka","b":"N","i":"N"},"AY119":{"n":"Gadag New","s":"Karnataka","b":"N","i":"N"},"AY121":{"n":"Bajpe","s":"Karnataka","b":"N","i":"N"},"AY133":{"n":"Savnoor Puttur","s":"Karnataka","b":"N","i":"N"},"JODO4":{"n":"Nagpur Manewada","s":"Maharashtra","b":"Y","i":"Y"},"AY134":{"n":"Kalladka","s":"Karnataka","b":"N","i":"N"},"AP013":{"n":"Nagpur Pardi-Lic","s":"Maharashtra","b":"Y","i":"Y"},"AY132":{"n":"Bailhongla","s":"Karnataka","b":"N","i":"N"},"AY141":{"n":"Suratkal","s":"Karnataka","b":"N","i":"N"},"AY146":{"n":"Tumkur 3","s":"Karnataka","b":"Y","i":"Y"},"AY145":{"n":"Siddhapura Udupi","s":"Karnataka","b":"N","i":"N"},"AR003":{"n":"Nagpur Radisson - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AH007":{"n":"Hyd Hayat Nagar","s":"Telangana","b":"N","i":"N"},"AT018":{"n":"Nagpur Taj Bagh","s":"Maharashtra","b":"Y","i":"Y"},"AY143":{"n":"Sangli","s":"Maharashtra","b":"Y","i":"N"},"AY004":{"n":"Yeotmal","s":"Maharashtra","b":"Y","i":"Y"},"AA001":{"n":"Ajmer","s":"Rajasthan","b":"Y","i":"Y"},"AD001":{"n":"Dausa","s":"Rajasthan","b":"Y","i":"Y"},"AY001":{"n":"Hyd Yapral","s":"Telangana","b":"N","i":"N"},"AJ006":{"n":"Jaipur Sikar Road","s":"Rajasthan","b":"Y","i":"Y"},"AT008":{"n":"Jaipur T P Nagar","s":"Rajasthan","b":"Y","i":"Y"},"AY105":{"n":"Ananthapur","s":"Telangana","b":"N","i":"N"},"AY030":{"n":"Hyd (Bandlaguda) Uppal","s":"Telangana","b":"Y","i":"Y"},"AA008":{"n":"Hyd Alwaal","s":"Telangana","b":"Y","i":"Y"},"AY058":{"n":"Hyd Bahadurpura","s":"Telangana","b":"Y","i":"Y"},"AB013":{"n":"Hyd Bandlaguda","s":"Telangana","b":"Y","i":"Y"},"AB012":{"n":"Hyd Barakas","s":"Telangana","b":"Y","i":"Y"},"AL002":{"n":"Hyd Lakdi Ka Pool","s":"Telangana","b":"Y","i":"Y"},"AL004":{"n":"Hyd Lalapet","s":"Telangana","b":"Y","i":"Y"},"AK003":{"n":"Kurnool","s":"Telangana","b":"N","i":"N"},"AS008":{"n":"Siddipet","s":"Telangana","b":"Y","i":"N"},"AW001":{"n":"Warangal","s":"Telangana","b":"N","i":"N"},"AN005":{"n":"Nizamabad","s":"Telangana","b":"N","i":"N"},"AA003":{"n":"Hyd Amberpet","s":"Telangana","b":"Y","i":"Y"},"AL003":{"n":"Hyd Lb Nagar","s":"Telangana","b":"Y","i":"Y"},"AP009":{"n":"Hyd Patancheru","s":"Telangana","b":"Y","i":"Y"},"AY069":{"n":"Kamareddy","s":"Telangana","b":"N","i":"N"},"AY104":{"n":"Raydurgam","s":"Telangana","b":"N","i":"N"},"AS007":{"n":"Hyd Sayeedabad","s":"Telangana","b":"Y","i":"Y"},"AB006":{"n":"Bhilwara","s":"Rajasthan","b":"N","i":"N"},"AS112":{"n":"Hyd Shahlibanda","s":"Telangana","b":"Y","i":"Y"},"AS014":{"n":"Hyd Siri Nagar","s":"Telangana","b":"Y","i":"Y"},"JODO12":{"n":"Hyd Yusufguda JODO","s":"Telangana","b":"Y","i":"Y"},"AA004":{"n":"Chennai Aminjikarai","s":"Tamil Nadu","b":"N","i":"N"},"AT006":{"n":"Chennai Thiruvallur","s":"Tamil Nadu","b":"N","i":"N"},"AP006":{"n":"Chennai Pattabhiram","s":"Tamil Nadu","b":"N","i":"N"},"AB018":{"n":"Hyd Balanagar","s":"Telangana","b":"Y","i":"Y"},"AV003":{"n":"Chennai Vepampattu","s":"Tamil Nadu","b":"N","i":"N"},"AT010":{"n":"Chennai Thirumullavoyal","s":"Tamil Nadu","b":"N","i":"N"},"AK014":{"n":"Chennai Kovilpathagai","s":"Tamil Nadu","b":"N","i":"N"},"AY059":{"n":"Koddad","s":"Telangana","b":"Y","i":"Y"},"JODO13":{"n":"Karimnagar - JODO","s":"Telangana","b":"Y","i":"Y"},"AN004":{"n":"Nirmal","s":"Telangana","b":"Y","i":"N"},"AY048":{"n":"Chennai T Nagar","s":"Tamil Nadu","b":"N","i":"N"},"AY080":{"n":"Chennai Arcot Road - Vadapalni","s":"Tamil Nadu","b":"Y","i":"Y"},"AA005":{"n":"Chennai Alapakkam","s":"Tamil Nadu","b":"N","i":"Y"},"AS010":{"n":"Chennai Saidapet","s":"Tamil Nadu","b":"N","i":"N"},"AS011":{"n":"Chennai Seenerikuppam","s":"Tamil Nadu","b":"N","i":"N"},"AV002":{"n":"Chennai Villivakam","s":"Tamil Nadu","b":"Y","i":"Y"},"AT016":{"n":"Chennai Thiruninruvur","s":"Tamil Nadu","b":"Y","i":"Y"},"AM008":{"n":"Chennai Madurvoyal","s":"Tamil Nadu","b":"N","i":"N"},"AG005":{"n":"Chennai Gerugambakkam","s":"Tamil Nadu","b":"N","i":"N"},"AN015":{"n":"Chennai Alwarpet New","s":"Tamil Nadu","b":"Y","i":"Y"},"AY047":{"n":"Chennai Perungudi Kottivakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY035":{"n":"Chennai Thiruverkadu","s":"Tamil Nadu","b":"N","i":"N"},"AY046":{"n":"Chennai Addambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AS012":{"n":"Chennai St.Thomas","s":"Tamil Nadu","b":"Y","i":"Y"},"AY092":{"n":"Chennai GNT Road","s":"Tamil Nadu","b":"N","i":"N"},"AS013":{"n":"Chennai Sivabhootam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY023":{"n":"Chennai Nenudungudram-","s":"Tamil Nadu","b":"Y","i":"N"},"AK015":{"n":"Chennai Kovalam","s":"Tamil Nadu","b":"N","i":"N"},"AY024":{"n":"Chennai Saligramam-","s":"Tamil Nadu","b":"Y","i":"N"},"AY056":{"n":"Chennai Nerukundram Madurvoyal","s":"Tamil Nadu","b":"Y","i":"Y"},"AY029":{"n":"Chennai Pallavaram -","s":"Tamil Nadu","b":"Y","i":"Y"},"AY040":{"n":"Chennai Madipakkam","s":"Tamil Nadu","b":"N","i":"N"},"AK009":{"n":"Chennai Kovalbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AK010":{"n":"Chennai Kondratur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY101":{"n":"Chennai Theerthagariyampattu","s":"Tamil Nadu","b":"N","i":"N"},"AY062":{"n":"Chennai Madhavaram Meenambal","s":"Tamil Nadu","b":"N","i":"N"},"AK006":{"n":"Chennai Kolathur -1","s":"Tamil Nadu","b":"N","i":"N"},"AT005":{"n":"Chennai TH Road","s":"Tamil Nadu","b":"Y","i":"Y"},"AK008":{"n":"Chennai Kallikuppam","s":"Tamil Nadu","b":"N","i":"N"},"AA007":{"n":"Chennai Ambatur","s":"Tamil Nadu","b":"N","i":"N"},"AP012":{"n":"Chennai Perumbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY022":{"n":"Chennai Sithalapakkam-","s":"Tamil Nadu","b":"Y","i":"Y"},"AV004":{"n":"Chennai Vinayakapuram","s":"Tamil Nadu","b":"N","i":"N"},"AN008":{"n":"Chennai Nungambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY091":{"n":"Chennai Greenways","s":"Tamil Nadu","b":"N","i":"N"},"AM011":{"n":"Chennai Menjur","s":"Tamil Nadu","b":"N","i":"N"},"AY065":{"n":"Chennai Ennore Iocl Express","s":"Tamil Nadu","b":"N","i":"N"},"AY063":{"n":"Chennai Pammal Tambaram","s":"Tamil Nadu","b":"Y","i":"N"},"AY085":{"n":"Chennai Shollinganallur","s":"Tamil Nadu","b":"Y","i":"N"},"AY067":{"n":"Chennai Kayrembedu","s":"Tamil Nadu","b":"N","i":"N"},"AT009":{"n":"Chennai Thondiarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AP010":{"n":"Chennai Padappai","s":"Tamil Nadu","b":"N","i":"N"},"AA011":{"n":"Chennai Andanguppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY021":{"n":"Chennai Tambaram Mudichur Road","s":"Tamil Nadu","b":"N","i":"N"},"AY045":{"n":"Chennai Perangalatur","s":"Tamil Nadu","b":"N","i":"N"},"AE002":{"n":"Chennai Ernaavur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY079":{"n":"Chennai Vardharajapuram","s":"Tamil Nadu","b":"N","i":"N"},"AY086":{"n":"Chennai Thirumudivakkam","s":"Tamil Nadu","b":"N","i":"N"},"AJ002":{"n":"Jollarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AT013":{"n":"Thiruthani","s":"Tamil Nadu","b":"N","i":"Y"},"AY078":{"n":"Chennai Thiruvottiyur - Jeevanlal Nagar","s":"Tamil Nadu","b":"Y","i":"Y"},"AK005":{"n":"Kancheepuram","s":"Tamil Nadu","b":"N","i":"N"},"AY055":{"n":"Thadaperumpakkam","s":"Tamil Nadu","b":"N","i":"N"},"AC004":{"n":"Coimbatore Thadagam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY089":{"n":"Chennai Egmore","s":"Tamil Nadu","b":"Y","i":"N"},"AC005":{"n":"Coimbatore Veeranpandi","s":"Tamil Nadu","b":"Y","i":"Y"},"AK004":{"n":"Kangeyam","s":"Tamil Nadu","b":"N","i":"N"},"AU002":{"n":"Chennai Urapakkam","s":"Tamil Nadu","b":"Y","i":"N"},"AY042":{"n":"Chennai Vandalur","s":"Tamil Nadu","b":"Y","i":"Y"},"AK012":{"n":"Kallipatti","s":"Tamil Nadu","b":"N","i":"N"},"AK013":{"n":"Kumarapallayam","s":"Tamil Nadu","b":"N","i":"N"},"AY094":{"n":"Kumarapallayam - Agraharam","s":"Tamil Nadu","b":"N","i":"N"},"AT014":{"n":"Thiruvannamalai-7","s":"Tamil Nadu","b":"Y","i":"Y"},"AN016":{"n":"Akkiyampattti","s":"Tamil Nadu","b":"N","i":"N"},"AS009":{"n":"Coimbatore Sanganoor","s":"Tamil Nadu","b":"Y","i":"Y"},"AY025":{"n":"Anthiyur New","s":"Tamil Nadu","b":"N","i":"N"},"AY039":{"n":"Chithode - Erode LOCO","s":"Tamil Nadu","b":"N","i":"N"},"AY083":{"n":"Veerappalayam Edapaddi- Selam Dist","s":"Tamil Nadu","b":"N","i":"N"},"DODO18":{"n":"Makkinancombai - DODO","s":"Tamil Nadu","b":"N","i":"N"},"AN009":{"n":"Satyamangalam New","s":"Tamil Nadu","b":"Y","i":"N"},"AS100":{"n":"Satyamangalam","s":"Tamil Nadu","b":"N","i":"N"},"AB015":{"n":"Belukuruchi","s":"Tamil Nadu","b":"Y","i":"N"},"AY010":{"n":"Kolapalur JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY011":{"n":"Alukulli JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY008":{"n":"Dharapuram","s":"Tamil Nadu","b":"Y","i":"N"},"AY020":{"n":"Kemmyampatti- Erode - Henry","s":"Tamil Nadu","b":"N","i":"N"},"AK021":{"n":"Kondichetipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AE001":{"n":"Erode Bhavani","s":"Tamil Nadu","b":"Y","i":"N"},"AY093":{"n":"Elumuthur Moodakurchi","s":"Tamil Nadu","b":"N","i":"N"},"AY014":{"n":"Vilsarampatti LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AY015":{"n":"Sivanamalai LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AP004":{"n":"Peramballur","s":"Tamil Nadu","b":"N","i":"N"},"AD003":{"n":"Dindigul","s":"Tamil Nadu","b":"N","i":"N"},"AT007":{"n":"Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY028":{"n":"Erode Avalapoondarai","s":"Tamil Nadu","b":"Y","i":"N"},"AK011":{"n":"Kinathakadavu","s":"Tamil Nadu","b":"N","i":"N"},"AR004":{"n":"Pollachie Rasakapalayam","s":"Tamil Nadu","b":"N","i":"N"},"AG006":{"n":"Gujiliamparai","s":"Tamil Nadu","b":"N","i":"N"},"AM010":{"n":"Melur","s":"Tamil Nadu","b":"N","i":"N"},"AY044":{"n":"Muthampalayam - Chennimalai Road","s":"Tamil Nadu","b":"Y","i":"N"},"AY068":{"n":"Thoraiyur Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY122":{"n":"Malasamundram","s":"Tamil Nadu","b":"N","i":"N"},"AY128":{"n":"Kalipalayam Avinashi-TIRUPUR","s":"Tamil Nadu","b":"N","i":"N"},"AY140":{"n":"Chenna- Ambattur Red hills","s":"Tamil Nadu","b":"Y","i":"Y"},"AY142":{"n":"Chennai Pulicat Chinnakavanam","s":"Tamil Nadu","b":"N","i":"N"},"AY144":{"n":"Illayankudi","s":"Tamil Nadu","b":"N","i":"N"},"AY106":{"n":"Pottyreddypatti","s":"Tamil Nadu","b":"Y","i":"N"},"AN006":{"n":"Madurai (New)","s":"Tamil Nadu","b":"Y","i":"Y"},"AP014":{"n":"Trichy Panjapur","s":"Tamil Nadu","b":"Y","i":"N"},"AO002":{"n":"Odaipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AK016":{"n":"Khandwa","s":"Madhya Pradesh","b":"N","i":"N"},"AB020":{"n":"Burhanpur","s":"Madhya Pradesh","b":"N","i":"N"},"AY053":{"n":"Sagar","s":"Madhya Pradesh","b":"N","i":"N"},"AB008":{"n":"Barasat","s":"West Bengal","b":"Y","i":"Y"},"DODO1":{"n":"Thiravator DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO2":{"n":"Mkb Nagar DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO3":{"n":"Moolakadai DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO4":{"n":"Chennai Madhavaram Puzal - DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO5":{"n":"Kavindapadi DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO6":{"n":"Madhuthapalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO16":{"n":"Gobichettypalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO13":{"n":"Ramnagar DODO","s":"Karnataka","b":"N","i":"N"},"DODO10":{"n":"Kar Bagalkot DODO","s":"Karnataka","b":"N","i":"N"},"DODO11":{"n":"Bijapur DODO","s":"Karnataka","b":"N","i":"N"},"DODO12":{"n":"Kunigal DODO","s":"Karnataka","b":"N","i":"N"},"DODO17":{"n":"YADGIR","s":"Karnataka","b":"N","i":"N"},"DODO19":{"n":"Byndoor","s":"Karnataka","b":"N","i":"N"},"DODO15":{"n":"Kalamna DODO","s":"Maharashtra","b":"N","i":"N"},"DODO14":{"n":"Karimnagar DODO","s":"Telangana","b":"N","i":"N"}};
+const MASTER={"AA006":{"n":"Ahmednagar","s":"Maharashtra","b":"N","i":"N"},"AA014":{"n":"Ahmednagar-Bholegaon","s":"Maharashtra","b":"N","i":"N"},"AC008":{"n":"Aurangabad-Chikalthana","s":"Maharashtra","b":"N","i":"N"},"AB016":{"n":"Aurangabad Beed Byepass","s":"Maharashtra","b":"Y","i":"Y"},"AK022":{"n":"Aurangabad Kanchanwadi","s":"Maharashtra","b":"N","i":"N"},"AY018":{"n":"Aurangabad South City","s":"Maharashtra","b":"N","i":"N"},"AY006":{"n":"Dhule","s":"Maharashtra","b":"Y","i":"Y"},"AY126":{"n":"Dhule Deopur","s":"Maharashtra","b":"Y","i":"N"},"AY033":{"n":"Manmad","s":"Maharashtra","b":"N","i":"N"},"AY060":{"n":"Niphad JODO","s":"Maharashtra","b":"N","i":"N"},"AY017":{"n":"Parbhani - New","s":"Maharashtra","b":"N","i":"N"},"AY002":{"n":"Yeola JODO - LOCO","s":"Maharashtra","b":"N","i":"N"},"AO001":{"n":"Ozar","s":"Maharashtra","b":"N","i":"N"},"AN013":{"n":"Nashik Adgaon","s":"Maharashtra","b":"Y","i":"Y"},"AY019":{"n":"Nashik Dwarka","s":"Maharashtra","b":"Y","i":"Y"},"AY087":{"n":"Nashik Satpur","s":"Maharashtra","b":"N","i":"N"},"AY096":{"n":"Ambaad Satpur","s":"Maharashtra","b":"N","i":"N"},"AY100":{"n":"Nashik Lam Road","s":"Maharashtra","b":"N","i":"N"},"AB022":{"n":"Bhusawal","s":"Maharashtra","b":"N","i":"N"},"AY027":{"n":"Jalna","s":"Maharashtra","b":"N","i":"N"},"AY084":{"n":"Sangamner","s":"Maharashtra","b":"N","i":"N"},"AY116":{"n":"Basmat","s":"Maharashtra","b":"N","i":"N"},"AY125":{"n":"Parbhani Pathri","s":"Maharashtra","b":"N","i":"N"},"AY118":{"n":"Bang Channasandra","s":"Karnataka","b":"Y","i":"Y"},"AY120":{"n":"Baramati New","s":"Maharashtra","b":"N","i":"N"},"AB004":{"n":"Barshi","s":"Maharashtra","b":"N","i":"N"},"AK002":{"n":"Kolhapur","s":"Maharashtra","b":"N","i":"N"},"AY127":{"n":"Kolhapur - City","s":"Maharashtra","b":"N","i":"N"},"AP008":{"n":"Pandharpur","s":"Maharashtra","b":"N","i":"N"},"AI003":{"n":"Indapur-JODO- LOCO","s":"Maharashtra","b":"N","i":"N"},"AP002":{"n":"Palus","s":"Maharashtra","b":"N","i":"N"},"AD005":{"n":"Bang Devanahalli","s":"Karnataka","b":"Y","i":"Y"},"AS001":{"n":"Solapur","s":"Maharashtra","b":"N","i":"N"},"AS114":{"n":"Solapur - 2","s":"Maharashtra","b":"N","i":"N"},"AY099":{"n":"Solapur - 3 Majrewadi","s":"Maharashtra","b":"N","i":"N"},"AY009":{"n":"Karmala JOCO","s":"Maharashtra","b":"N","i":"N"},"AL005":{"n":"Latur Ambejogai Road","s":"Maharashtra","b":"Y","i":"Y"},"JODO2":{"n":"Nanded JODO","s":"Maharashtra","b":"N","i":"N"},"AY038":{"n":"Karad","s":"Maharashtra","b":"N","i":"N"},"AY049":{"n":"Satara","s":"Maharashtra","b":"N","i":"N"},"AY003":{"n":"Bang Yellahanka","s":"Karnataka","b":"Y","i":"Y"},"AY036":{"n":"Chikaballapur","s":"Karnataka","b":"Y","i":"Y"},"AY130":{"n":"Jangamkotte","s":"Karnataka","b":"Y","i":"Y"},"AY139":{"n":"Tumkur-2","s":"Karnataka","b":"Y","i":"Y"},"AY111":{"n":"Jabalpur Adhartal","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ007":{"n":"Jabalpur Durgavati","s":"Madhya Pradesh","b":"Y","i":"Y"},"AY108":{"n":"Jabalpur Karmeta","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ005":{"n":"Jabalpur Laxmipur","s":"Madhya Pradesh","b":"Y","i":"Y"},"AA013":{"n":"Akola Nandu","s":"Maharashtra","b":"Y","i":"Y"},"AA012":{"n":"Amrawati - Sunderlal","s":"Maharashtra","b":"Y","i":"Y"},"AB010":{"n":"Bang Banaswadi","s":"Karnataka","b":"Y","i":"N"},"JODO6":{"n":"Bang Banergatta JODO","s":"Karnataka","b":"N","i":"N"},"AB001":{"n":"Baramati","s":"Maharashtra","b":"Y","i":"N"},"AY081":{"n":"Bang Kariyanpalayam - (Lingarajpura)","s":"Karnataka","b":"Y","i":"Y"},"JODO11":{"n":"Bang Katrigupe JODO","s":"Karnataka","b":"N","i":"N"},"AL001":{"n":"Bang Lalbaugh","s":"Karnataka","b":"Y","i":"Y"},"AY043":{"n":"Bang Mahadevpura","s":"Karnataka","b":"Y","i":"Y"},"AY031":{"n":"Bang Nandidurga","s":"Karnataka","b":"Y","i":"Y"},"AN011":{"n":"Bang Nayandahalli","s":"Karnataka","b":"Y","i":"Y"},"AN012":{"n":"Bang Neelamangala","s":"Karnataka","b":"Y","i":"Y"},"AY037":{"n":"Nagpur Hingana","s":"Maharashtra","b":"Y","i":"Y"},"AY082":{"n":"Bang Yeshwantpura","s":"Karnataka","b":"Y","i":"Y"},"AJ003":{"n":"Bang JP Nagar","s":"Karnataka","b":"Y","i":"Y"},"AI002":{"n":"Nagpur Imambada","s":"Maharashtra","b":"Y","i":"Y"},"AY129":{"n":"Bang Konankunte","s":"Karnataka","b":"Y","i":"Y"},"AY123":{"n":"Bang Whitefield","s":"Karnataka","b":"Y","i":"Y"},"AB019":{"n":"Bengarpet","s":"Karnataka","b":"Y","i":"N"},"AK001":{"n":"Nagpur Kamptee Rd - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AD006":{"n":"Dodaballapur","s":"Karnataka","b":"N","i":"N"},"AY054":{"n":"Kanakapura LOCO","s":"Karnataka","b":"N","i":"N"},"AK020":{"n":"KGF","s":"Karnataka","b":"Y","i":"N"},"AM006":{"n":"Mulbagal","s":"Karnataka","b":"Y","i":"N"},"AY103":{"n":"Aland JOCO","s":"Karnataka","b":"N","i":"N"},"AY052":{"n":"Belgavi JOCO","s":"Karnataka","b":"N","i":"N"},"JODO9":{"n":"Belgavi JODO","s":"Karnataka","b":"N","i":"N"},"AD004":{"n":"Dharwad","s":"Karnataka","b":"N","i":"N"},"AY026":{"n":"Dharwad - New","s":"Karnataka","b":"N","i":"N"},"AG001":{"n":"Gadag","s":"Karnataka","b":"N","i":"N"},"AG004":{"n":"Gulbarga Ring Road","s":"Karnataka","b":"N","i":"N"},"AY102":{"n":"Gulbarga Fort","s":"Karnataka","b":"N","i":"N"},"AH013":{"n":"Hangal","s":"Karnataka","b":"N","i":"N"},"AH006":{"n":"Haveri","s":"Karnataka","b":"N","i":"N"},"AH012":{"n":"Hubbali Anand Nagar","s":"Karnataka","b":"N","i":"N"},"JODO7":{"n":"Hubbali New JODO","s":"Karnataka","b":"N","i":"N"},"AH004":{"n":"Hubbali Old","s":"Karnataka","b":"N","i":"N"},"AY012":{"n":"Lakshmeshwar","s":"Karnataka","b":"N","i":"N"},"AN014":{"n":"Nippani","s":"Karnataka","b":"N","i":"N"},"AR001":{"n":"Raichur","s":"Karnataka","b":"N","i":"N"},"AY005":{"n":"Sindhanoor","s":"Karnataka","b":"N","i":"N"},"AB017":{"n":"Bhadrawati","s":"Karnataka","b":"N","i":"N"},"AC009":{"n":"Channagiri","s":"Karnataka","b":"N","i":"N"},"AH010":{"n":"Hosdurga","s":"Karnataka","b":"N","i":"N"},"AS016":{"n":"Sagara","s":"Karnataka","b":"N","i":"N"},"AS004":{"n":"Shimoga","s":"Karnataka","b":"N","i":"N"},"AT011":{"n":"Teerathali","s":"Karnataka","b":"N","i":"N"},"AC007":{"n":"Channaraypatna","s":"Karnataka","b":"N","i":"N"},"AC003":{"n":"Chikamaglur","s":"Karnataka","b":"N","i":"N"},"AH005":{"n":"Hassan","s":"Karnataka","b":"N","i":"N"},"AY057":{"n":"Hassan 2 New","s":"Karnataka","b":"N","i":"N"},"AM009":{"n":"Malavalli","s":"Karnataka","b":"N","i":"N"},"AM002":{"n":"Mysore Nie","s":"Karnataka","b":"Y","i":"Y"},"AN007":{"n":"Nanjangud","s":"Karnataka","b":"Y","i":"Y"},"AT017":{"n":"T Narsipura","s":"Karnataka","b":"N","i":"N"},"AY098":{"n":"Bellary 2","s":"Karnataka","b":"N","i":"N"},"AY090":{"n":"Bhatkal","s":"Karnataka","b":"N","i":"N"},"AY066":{"n":"Hebri - JOCO","s":"Karnataka","b":"N","i":"N"},"AY095":{"n":"K R Pete","s":"Karnataka","b":"N","i":"N"},"AY097":{"n":"Kumta","s":"Karnataka","b":"N","i":"N"},"AY041":{"n":"Ankola","s":"Karnataka","b":"N","i":"N"},"AA002":{"n":"Arsikere","s":"Karnataka","b":"N","i":"N"},"AG008":{"n":"Gubbi","s":"Karnataka","b":"N","i":"N"},"AK019":{"n":"Karwar","s":"Karnataka","b":"N","i":"N"},"AY050":{"n":"Kinnigoli","s":"Karnataka","b":"N","i":"N"},"AM003":{"n":"Madhugiri","s":"Karnataka","b":"N","i":"N"},"AM004":{"n":"Mangalore","s":"Karnataka","b":"N","i":"N"},"AP011":{"n":"Puttur","s":"Karnataka","b":"N","i":"N"},"AY034":{"n":"Rayee","s":"Karnataka","b":"N","i":"N"},"AS015":{"n":"Sastana","s":"Karnataka","b":"N","i":"N"},"AS005":{"n":"Sira","s":"Karnataka","b":"N","i":"N"},"AS006":{"n":"Sirsi","s":"Karnataka","b":"N","i":"N"},"AT004":{"n":"Tiptur","s":"Karnataka","b":"N","i":"N"},"AT002":{"n":"Tumkur","s":"Karnataka","b":"Y","i":"Y"},"AY051":{"n":"Udupi - 2 New","s":"Karnataka","b":"Y","i":"N"},"JODO8":{"n":"Udupi JODO","s":"Karnataka","b":"Y","i":"N"},"AV006":{"n":"Vitla","s":"Karnataka","b":"N","i":"N"},"JODO10":{"n":"Kundapur JODO","s":"Karnataka","b":"N","i":"N"},"AB100":{"n":"Bellary","s":"Karnataka","b":"N","i":"N"},"AD002":{"n":"Davangere","s":"Karnataka","b":"N","i":"N"},"AH011":{"n":"Harihara","s":"Karnataka","b":"N","i":"N"},"AB021":{"n":"Harpanahalli","s":"Karnataka","b":"N","i":"N"},"AY016":{"n":"Hosepet","s":"Karnataka","b":"N","i":"N"},"AK017":{"n":"Koppal","s":"Karnataka","b":"N","i":"N"},"AR005":{"n":"Ranebennur","s":"Karnataka","b":"N","i":"N"},"AY107":{"n":"Belur","s":"Karnataka","b":"N","i":"N"},"AY110":{"n":"Gangawati","s":"Karnataka","b":"N","i":"N"},"AY113":{"n":"Kumbra","s":"Karnataka","b":"N","i":"N"},"AY109":{"n":"Mudipu","s":"Karnataka","b":"N","i":"N"},"AY112":{"n":"SINDAGI","s":"Karnataka","b":"N","i":"N"},"AY117":{"n":"Bidar","s":"Karnataka","b":"N","i":"N"},"AY147":{"n":"Challakere DODO - LOCO","s":"Karnataka","b":"N","i":"N"},"AY124":{"n":"Shimoga Bommankatte","s":"Karnataka","b":"N","i":"N"},"AY119":{"n":"Gadag New","s":"Karnataka","b":"N","i":"N"},"AY121":{"n":"Bajpe","s":"Karnataka","b":"N","i":"N"},"AY133":{"n":"Savnoor Puttur","s":"Karnataka","b":"N","i":"N"},"JODO4":{"n":"Nagpur Manewada","s":"Maharashtra","b":"Y","i":"Y"},"AY134":{"n":"Kalladka","s":"Karnataka","b":"N","i":"N"},"AP013":{"n":"Nagpur Pardi-Lic","s":"Maharashtra","b":"Y","i":"Y"},"AY132":{"n":"Bailhongla","s":"Karnataka","b":"N","i":"N"},"AY141":{"n":"Suratkal","s":"Karnataka","b":"N","i":"N"},"AY146":{"n":"Tumkur 3","s":"Karnataka","b":"Y","i":"Y"},"AY145":{"n":"Siddhapura Udupi","s":"Karnataka","b":"N","i":"N"},"AR003":{"n":"Nagpur Radisson - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AH007":{"n":"Hyd Hayat Nagar","s":"Telangana","b":"N","i":"N"},"AT018":{"n":"Nagpur Taj Bagh","s":"Maharashtra","b":"Y","i":"Y"},"AY143":{"n":"Sangli","s":"Maharashtra","b":"Y","i":"N"},"AY004":{"n":"Yeotmal","s":"Maharashtra","b":"Y","i":"Y"},"AA001":{"n":"Ajmer","s":"Rajasthan","b":"Y","i":"Y"},"AD001":{"n":"Dausa","s":"Rajasthan","b":"Y","i":"Y"},"AY001":{"n":"Hyd Yapral","s":"Telangana","b":"N","i":"N"},"AJ006":{"n":"Jaipur Sikar Road","s":"Rajasthan","b":"Y","i":"Y"},"AT008":{"n":"Jaipur T P Nagar","s":"Rajasthan","b":"Y","i":"Y"},"AY105":{"n":"Ananthapur","s":"Telangana","b":"N","i":"N"},"AY030":{"n":"Hyd (Bandlaguda) Uppal","s":"Telangana","b":"Y","i":"Y"},"AA008":{"n":"Hyd Alwaal","s":"Telangana","b":"Y","i":"Y"},"AY058":{"n":"Hyd Bahadurpura","s":"Telangana","b":"Y","i":"Y"},"AB013":{"n":"Hyd Bandlaguda","s":"Telangana","b":"Y","i":"Y"},"AB012":{"n":"Hyd Barakas","s":"Telangana","b":"Y","i":"Y"},"AL002":{"n":"Hyd Lakdi Ka Pool","s":"Telangana","b":"Y","i":"Y"},"AL004":{"n":"Hyd Lalapet","s":"Telangana","b":"Y","i":"Y"},"AK003":{"n":"Kurnool","s":"Telangana","b":"N","i":"N"},"AS008":{"n":"Siddipet","s":"Telangana","b":"Y","i":"N"},"AW001":{"n":"Warangal","s":"Telangana","b":"N","i":"N"},"AN005":{"n":"Nizamabad","s":"Telangana","b":"N","i":"N"},"AA003":{"n":"Hyd Amberpet","s":"Telangana","b":"Y","i":"Y"},"AL003":{"n":"Hyd Lb Nagar","s":"Telangana","b":"Y","i":"Y"},"AP009":{"n":"Hyd Patancheru","s":"Telangana","b":"Y","i":"Y"},"AY069":{"n":"Kamareddy","s":"Telangana","b":"N","i":"N"},"AY104":{"n":"Raydurgam","s":"Telangana","b":"N","i":"N"},"AS007":{"n":"Hyd Sayeedabad","s":"Telangana","b":"Y","i":"Y"},"AB006":{"n":"Bhilwara","s":"Rajasthan","b":"N","i":"N"},"AS112":{"n":"Hyd Shahlibanda","s":"Telangana","b":"Y","i":"Y"},"AS014":{"n":"Hyd Siri Nagar","s":"Telangana","b":"Y","i":"Y"},"JODO12":{"n":"Hyd Yusufguda JODO","s":"Telangana","b":"Y","i":"Y"},"AA004":{"n":"Chennai Aminjikarai","s":"Tamil Nadu","b":"Y","i":"Y"},"AT006":{"n":"Chennai Thiruvallur","s":"Tamil Nadu","b":"N","i":"N"},"AP006":{"n":"Chennai Pattabhiram","s":"Tamil Nadu","b":"Y","i":"N"},"AB018":{"n":"Hyd Balanagar","s":"Telangana","b":"Y","i":"Y"},"AV003":{"n":"Chennai Vepampattu","s":"Tamil Nadu","b":"N","i":"N"},"AT010":{"n":"Chennai Thirumullavoyal","s":"Tamil Nadu","b":"Y","i":"Y"},"AK014":{"n":"Chennai Kovilpathagai","s":"Tamil Nadu","b":"Y","i":"N"},"AY059":{"n":"Koddad","s":"Telangana","b":"Y","i":"Y"},"JODO13":{"n":"Karimnagar - JODO","s":"Telangana","b":"Y","i":"Y"},"AN004":{"n":"Nirmal","s":"Telangana","b":"Y","i":"N"},"AY048":{"n":"Chennai T Nagar","s":"Tamil Nadu","b":"N","i":"N"},"AY080":{"n":"Chennai Arcot Road - Vadapalni","s":"Tamil Nadu","b":"Y","i":"Y"},"AA005":{"n":"Chennai Alapakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AS010":{"n":"Chennai Saidapet","s":"Tamil Nadu","b":"N","i":"N"},"AS011":{"n":"Chennai Seenerikuppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AV002":{"n":"Chennai Villivakam","s":"Tamil Nadu","b":"Y","i":"Y"},"AT016":{"n":"Chennai Thiruninruvur","s":"Tamil Nadu","b":"Y","i":"Y"},"AM008":{"n":"Chennai Madurvoyal","s":"Tamil Nadu","b":"N","i":"N"},"AG005":{"n":"Chennai Gerugambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AN015":{"n":"Chennai Alwarpet New","s":"Tamil Nadu","b":"Y","i":"Y"},"AY047":{"n":"Chennai Perungudi Kottivakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY035":{"n":"Chennai Thiruverkadu","s":"Tamil Nadu","b":"Y","i":"N"},"AY046":{"n":"Chennai Addambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AS012":{"n":"Chennai St.Thomas","s":"Tamil Nadu","b":"Y","i":"Y"},"AY092":{"n":"Chennai GNT Road","s":"Tamil Nadu","b":"Y","i":"Y"},"AS013":{"n":"Chennai Sivabhootam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY023":{"n":"Chennai Nenudungudram-","s":"Tamil Nadu","b":"Y","i":"Y"},"AK015":{"n":"Chennai Kovalam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY024":{"n":"Chennai Saligramam-","s":"Tamil Nadu","b":"Y","i":"N"},"AY056":{"n":"Chennai Nerukundram Madurvoyal","s":"Tamil Nadu","b":"Y","i":"Y"},"AY029":{"n":"Chennai Pallavaram -","s":"Tamil Nadu","b":"Y","i":"Y"},"AY040":{"n":"Chennai Madipakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AK009":{"n":"Chennai Kovalbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AK010":{"n":"Chennai Kondratur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY101":{"n":"Chennai Theerthagariyampattu","s":"Tamil Nadu","b":"N","i":"N"},"AY062":{"n":"Chennai Madhavaram Meenambal","s":"Tamil Nadu","b":"N","i":"N"},"AK006":{"n":"Chennai Kolathur -1","s":"Tamil Nadu","b":"Y","i":"Y"},"AT005":{"n":"Chennai TH Road","s":"Tamil Nadu","b":"Y","i":"Y"},"AK008":{"n":"Chennai Kallikuppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AA007":{"n":"Chennai Ambatur","s":"Tamil Nadu","b":"Y","i":"Y"},"AP012":{"n":"Chennai Perumbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY022":{"n":"Chennai Sithalapakkam-","s":"Tamil Nadu","b":"Y","i":"Y"},"AV004":{"n":"Chennai Vinayakapuram","s":"Tamil Nadu","b":"Y","i":"Y"},"AN008":{"n":"Chennai Nungambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY091":{"n":"Chennai Greenways","s":"Tamil Nadu","b":"N","i":"N"},"AM011":{"n":"Chennai Menjur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY065":{"n":"Chennai Ennore Iocl Express","s":"Tamil Nadu","b":"N","i":"N"},"AY063":{"n":"Chennai Pammal Tambaram","s":"Tamil Nadu","b":"Y","i":"N"},"AY085":{"n":"Chennai Shollinganallur","s":"Tamil Nadu","b":"Y","i":"N"},"AY067":{"n":"Chennai Kayrembedu","s":"Tamil Nadu","b":"N","i":"N"},"AT009":{"n":"Chennai Thondiarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AP010":{"n":"Chennai Padappai","s":"Tamil Nadu","b":"Y","i":"N"},"AA011":{"n":"Chennai Andanguppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY021":{"n":"Chennai Tambaram Mudichur Road","s":"Tamil Nadu","b":"Y","i":"N"},"AY045":{"n":"Chennai Perangalatur","s":"Tamil Nadu","b":"Y","i":"N"},"AE002":{"n":"Chennai Ernaavur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY079":{"n":"Chennai Vardharajapuram","s":"Tamil Nadu","b":"Y","i":"N"},"AY086":{"n":"Chennai Thirumudivakkam","s":"Tamil Nadu","b":"Y","i":"N"},"AJ002":{"n":"Jollarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AT013":{"n":"Thiruthani","s":"Tamil Nadu","b":"N","i":"Y"},"AY078":{"n":"Chennai Thiruvottiyur - Jeevanlal Nagar","s":"Tamil Nadu","b":"Y","i":"Y"},"AK005":{"n":"Kancheepuram","s":"Tamil Nadu","b":"N","i":"N"},"AY055":{"n":"Thadaperumpakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AC004":{"n":"Coimbatore Thadagam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY089":{"n":"Chennai Egmore","s":"Tamil Nadu","b":"Y","i":"N"},"AC005":{"n":"Coimbatore Veeranpandi","s":"Tamil Nadu","b":"Y","i":"Y"},"AK004":{"n":"Kangeyam","s":"Tamil Nadu","b":"N","i":"N"},"AU002":{"n":"Chennai Urapakkam","s":"Tamil Nadu","b":"Y","i":"N"},"AY042":{"n":"Chennai Vandalur","s":"Tamil Nadu","b":"Y","i":"Y"},"AK012":{"n":"Kallipatti","s":"Tamil Nadu","b":"N","i":"N"},"AK013":{"n":"Kumarapallayam","s":"Tamil Nadu","b":"N","i":"N"},"AY094":{"n":"Kumarapallayam - Agraharam","s":"Tamil Nadu","b":"N","i":"N"},"AT014":{"n":"Thiruvannamalai-7","s":"Tamil Nadu","b":"Y","i":"Y"},"AN016":{"n":"Akkiyampattti","s":"Tamil Nadu","b":"N","i":"N"},"AS009":{"n":"Coimbatore Sanganoor","s":"Tamil Nadu","b":"Y","i":"Y"},"AY025":{"n":"Anthiyur New","s":"Tamil Nadu","b":"Y","i":"N"},"AY039":{"n":"Chithode - Erode LOCO","s":"Tamil Nadu","b":"N","i":"N"},"AY083":{"n":"Veerappalayam Edapaddi- Selam Dist","s":"Tamil Nadu","b":"N","i":"N"},"DODO18":{"n":"Makkinancombai - DODO","s":"Tamil Nadu","b":"N","i":"N"},"AN009":{"n":"Satyamangalam New","s":"Tamil Nadu","b":"Y","i":"N"},"AS100":{"n":"Satyamangalam","s":"Tamil Nadu","b":"Y","i":"N"},"AB015":{"n":"Belukuruchi","s":"Tamil Nadu","b":"Y","i":"N"},"AY010":{"n":"Kolapalur JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY011":{"n":"Alukulli JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY008":{"n":"Dharapuram","s":"Tamil Nadu","b":"Y","i":"N"},"AY020":{"n":"Kemmyampatti- Erode - Henry","s":"Tamil Nadu","b":"N","i":"N"},"AK021":{"n":"Kondichetipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AE001":{"n":"Erode Bhavani","s":"Tamil Nadu","b":"Y","i":"N"},"AY093":{"n":"Elumuthur Moodakurchi","s":"Tamil Nadu","b":"N","i":"N"},"AY014":{"n":"Vilsarampatti LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AY015":{"n":"Sivanamalai LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AP004":{"n":"Peramballur","s":"Tamil Nadu","b":"N","i":"N"},"AD003":{"n":"Dindigul","s":"Tamil Nadu","b":"N","i":"N"},"AT007":{"n":"Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY028":{"n":"Erode Avalapoondarai","s":"Tamil Nadu","b":"Y","i":"N"},"AK011":{"n":"Kinathakadavu","s":"Tamil Nadu","b":"N","i":"N"},"AR004":{"n":"Pollachie Rasakapalayam","s":"Tamil Nadu","b":"N","i":"N"},"AG006":{"n":"Gujiliamparai","s":"Tamil Nadu","b":"N","i":"N"},"AM010":{"n":"Melur","s":"Tamil Nadu","b":"N","i":"N"},"AY044":{"n":"Muthampalayam - Chennimalai Road","s":"Tamil Nadu","b":"Y","i":"N"},"AY068":{"n":"Thoraiyur Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY122":{"n":"Malasamundram","s":"Tamil Nadu","b":"N","i":"N"},"AY128":{"n":"Kalipalayam Avinashi-TIRUPUR","s":"Tamil Nadu","b":"Y","i":"Y"},"AY140":{"n":"Chenna- Ambattur Red hills","s":"Tamil Nadu","b":"Y","i":"Y"},"AY142":{"n":"Chennai Pulicat Chinnakavanam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY144":{"n":"Illayankudi","s":"Tamil Nadu","b":"N","i":"N"},"AY106":{"n":"Pottyreddypatti","s":"Tamil Nadu","b":"Y","i":"N"},"AN006":{"n":"Madurai (New)","s":"Tamil Nadu","b":"Y","i":"Y"},"AP014":{"n":"Trichy Panjapur","s":"Tamil Nadu","b":"Y","i":"N"},"AO002":{"n":"Odaipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AK016":{"n":"Khandwa","s":"Madhya Pradesh","b":"N","i":"N"},"AB020":{"n":"Burhanpur","s":"Madhya Pradesh","b":"N","i":"N"},"AY053":{"n":"Sagar","s":"Madhya Pradesh","b":"N","i":"N"},"AB008":{"n":"Barasat","s":"West Bengal","b":"Y","i":"Y"},"DODO1":{"n":"Thiravator DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO2":{"n":"Mkb Nagar DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO3":{"n":"Moolakadai DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO4":{"n":"Chennai Madhavaram Puzal - DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO5":{"n":"Kavindapadi DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO6":{"n":"Madhuthapalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO16":{"n":"Gobichettypalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO13":{"n":"Ramnagar DODO","s":"Karnataka","b":"N","i":"N"},"DODO10":{"n":"Kar Bagalkot DODO","s":"Karnataka","b":"N","i":"N"},"DODO11":{"n":"Bijapur DODO","s":"Karnataka","b":"N","i":"N"},"DODO12":{"n":"Kunigal DODO","s":"Karnataka","b":"N","i":"N"},"DODO17":{"n":"YADGIR","s":"Karnataka","b":"N","i":"N"},"DODO19":{"n":"Byndoor","s":"Karnataka","b":"N","i":"N"},"DODO15":{"n":"Kalamna DODO","s":"Maharashtra","b":"N","i":"N"},"DODO14":{"n":"Karimnagar DODO","s":"Telangana","b":"N","i":"N"}};
 function masterLookup(erp){if(!erp)return null;const k=String(erp).trim().toUpperCase();return MASTER[k]||null;}
 
 const S={txn:null,cust:null,final:null,state:null,cur:'final',open:{}};
 let file1=null,file2=null;
-
-/* ---- column definitions per view; key, label, locked(always on) ---- */
 const COLS={
-  final:[
-    {k:'erp',l:'ERP',lock:true},{k:'name',l:'Station',lock:true},{k:'state',l:'State'},
+  final:[{k:'erp',l:'ERP',lock:true},{k:'name',l:'Station',lock:true},{k:'state',l:'State'},
     {k:'txn',l:'Device / Txn Total'},{k:'mob',l:'Mobile No Count'},
     {k:'custMob',l:'Customer Mobile Total'},{k:'pct',l:'BLE %'},
-    {k:'ble',l:'BLE Installed'},{k:'iso',l:'Isolator'}
-  ],
-  state:[
-    {k:'state',l:'State',lock:true},{k:'stations',l:'Stations'},
+    {k:'ble',l:'BLE Installed'},{k:'iso',l:'Isolator'}],
+  state:[{k:'state',l:'State',lock:true},{k:'stations',l:'Stations'},
     {k:'txn',l:'Device / Txn Total'},{k:'mob',l:'Mobile No Count'},
     {k:'custMob',l:'Customer Mobile Total'},{k:'pct',l:'BLE %'},
-    {k:'ble_installed',l:'BLE Installed (#)'},{k:'iso_installed',l:'Isolator (#)'}
-  ],
-  txn:[
-    {k:'erp',l:'ERP',lock:true},{k:'name',l:'Station',lock:true},{k:'state',l:'State'},
-    {k:'txn',l:'Device / Txn Total'},{k:'mob',l:'Mobile No Count'}
-  ],
-  cust:[
-    {k:'station',l:'Station',lock:true},{k:'state',l:'State'},{k:'count',l:'Mobile Transaction Count'}
-  ]
+    {k:'ble_installed',l:'BLE Installed (#)'},{k:'iso_installed',l:'Isolator (#)'}],
+  txn:[{k:'erp',l:'ERP',lock:true},{k:'name',l:'Station',lock:true},{k:'state',l:'State'},
+    {k:'txn',l:'Device / Txn Total'},{k:'mob',l:'Mobile No Count'}],
+  cust:[{k:'station',l:'Station',lock:true},{k:'state',l:'State'},{k:'count',l:'Mobile Transaction Count'}]
 };
 const VISIBLE={};
 Object.keys(COLS).forEach(v=>{VISIBLE[v]={};COLS[v].forEach(c=>VISIBLE[v][c.k]=true);});
 const NUMK=['txn','mob','custMob','pct','count','stations','ble_installed','iso_installed'];
-const SORT={};   // per-view: {key, dir}
-const FILT={};   // per-view: {colKey:{text} or {min,max}}
+const SORT={};const FILT={};
 Object.keys(COLS).forEach(v=>{SORT[v]=null;FILT[v]={};});
 
 function readFile(file){return new Promise((res,rej)=>{const r=new FileReader();
   r.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];res(XLSX.utils.sheet_to_json(ws,{header:1,defval:null}));}catch(err){rej(err)}};
   r.onerror=rej;r.readAsArrayBuffer(file);});}
-function setFile(which,f){
-  if(!f)return;
-  const ok=/\.(xlsx|xls)$/i.test(f.name);
+function setFile(which,f){if(!f)return;const ok=/\.(xlsx|xls)$/i.test(f.name);
   if(!ok){alert('Please drop an Excel file (.xlsx or .xls)');return;}
   if(which===1){file1=f;}else{file2=f;}
-  const n=document.getElementById('n'+which);
-  n.textContent=f.name;n.style.display='flex';
-  document.getElementById('drop'+which).classList.add('ok');check();
-}
+  const n=document.getElementById('n'+which);n.textContent=f.name;n.style.display='flex';
+  document.getElementById('drop'+which).classList.add('ok');check();}
 document.getElementById('f1').onchange=e=>setFile(1,e.target.files[0]);
 document.getElementById('f2').onchange=e=>setFile(2,e.target.files[0]);
-[1,2].forEach(w=>{
-  const card=document.getElementById('drop'+w);
+[1,2].forEach(w=>{const card=document.getElementById('drop'+w);
   card.addEventListener('dragover',e=>{e.preventDefault();card.classList.add('dragging');});
   card.addEventListener('dragleave',e=>{if(!card.contains(e.relatedTarget))card.classList.remove('dragging');});
   card.addEventListener('drop',e=>{e.preventDefault();card.classList.remove('dragging');
-    const f=e.dataTransfer.files&&e.dataTransfer.files[0];setFile(w,f);});
-});
+    const f=e.dataTransfer.files&&e.dataTransfer.files[0];setFile(w,f);});});
 function check(){document.getElementById('gen').disabled=!(file1&&file2);}
 function findHeader(rows,keys){for(let i=0;i<Math.min(rows.length,30);i++){
   const r=(rows[i]||[]).map(x=>String(x||'').trim().toLowerCase());if(keys.every(k=>r.includes(k)))return i;}return -1;}
@@ -516,22 +396,16 @@ function buildCust(rows){const hi=findHeader(rows,['station','mobile_number']);c
     if(!map[k])map[k]={station:String(st).trim(),state:r[cState]||'',count:0};map[k].count++;}
   return Object.values(map).sort((a,b)=>b.count-a.count);}
 function buildFinal(txn,cust){const cmap={};cust.forEach(c=>cmap[norm(c.station)]=c.count);
-  /* 1. Rows for stations that DID appear in the Nozzle Report */
   const seen=new Set();
   const rows=txn.map(t=>{const cc=cmap[norm(t.name)]!==undefined?cmap[norm(t.name)]:0;
-    /* BLE % = Customer Mobile Total / Device Txn Total */
     const pct=t.txn>0?(cc/t.txn*100):0;
     const m=masterLookup(t.erp);
     seen.add(String(t.erp).trim().toUpperCase());
     return Object.assign({},t,{custMob:cc,pct:pct,ble:m?m.b:'-',iso:m?m.i:'-'});});
-  /* 2. Rows for stations in MASTER but NOT in Nozzle Report — show as zero-activity */
   Object.keys(MASTER).forEach(k=>{if(seen.has(k))return;const m=MASTER[k];
-    /* Try to find a customer-mobile count by station name */
     const cc=cmap[norm(m.n)]!==undefined?cmap[norm(m.n)]:0;
     rows.push({erp:k,name:m.n,state:m.s,txn:0,mob:0,custMob:cc,pct:0,ble:m.b,iso:m.i});});
-  /* Sort: high-activity first */
-  rows.sort((a,b)=>b.txn-a.txn);
-  return rows;}
+  rows.sort((a,b)=>b.txn-a.txn);return rows;}
 function buildState(final){const map={};
   final.forEach(r=>{const k=r.state||'Unknown';if(!map[k])map[k]={state:k,stations:0,txn:0,mob:0,custMob:0,ble_installed:0,iso_installed:0,children:[]};
     const m=map[k];m.stations++;m.txn+=r.txn;m.mob+=r.mob;m.custMob+=r.custMob;
@@ -545,43 +419,28 @@ document.getElementById('gen').onclick=async()=>{const g=document.getElementById
     renderStats();renderColPicker();render();
     document.getElementById('placeholder').classList.add('hidden');document.getElementById('output').classList.remove('hidden');
     document.getElementById('stats').classList.remove('hidden');document.getElementById('search').classList.remove('hidden');
-    /* Auto-sync report to Supabase */
     syncReportToSupabase();
   }catch(err){alert('Error: '+err.message);}g.textContent='Generate Reports';g.disabled=false;};
 
-async function syncReportToSupabase(){
-  try{
-    if(!CURRENT_USER||!S.final)return;
-    const totTxn=S.final.reduce((a,b)=>a+b.txn,0);
-    const totMob=S.final.reduce((a,b)=>a+b.mob,0);
-    const totCust=S.final.reduce((a,b)=>a+b.custMob,0);
-    const ble_pct=totTxn?+(totCust/totTxn*100).toFixed(2):0;
-    const payload={
-      user_id:CURRENT_USER.id,
-      station_count:S.final.length,
-      txn_total:totTxn,
-      ble_mapped:totMob,
-      ble_pct:ble_pct,
-      customer_txn_total:totCust,
-      state_count:S.state.length,
-      data_final:S.final,
-      data_state:S.state.map(s=>({state:s.state,stations:s.stations,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,ble_installed:s.ble_installed,iso_installed:s.iso_installed})),
-      data_txn:S.txn,
-      data_cust:S.cust
-    };
-    const {error}=await sb.from('reports').insert(payload);
-    if(error){console.warn('Report sync failed:',error.message);}
-    else{console.log('Report synced to Supabase');}
-  }catch(e){console.warn('Report sync error:',e);}
-}
+async function syncReportToSupabase(){try{if(!CURRENT_USER||!S.final)return;
+  const totTxn=S.final.reduce((a,b)=>a+b.txn,0);const totMob=S.final.reduce((a,b)=>a+b.mob,0);
+  const totCust=S.final.reduce((a,b)=>a+b.custMob,0);
+  const ble_pct=totTxn?+(totCust/totTxn*100).toFixed(2):0;
+  const payload={user_id:CURRENT_USER.id,station_count:S.final.length,txn_total:totTxn,
+    ble_mapped:totMob,ble_pct:ble_pct,customer_txn_total:totCust,state_count:S.state.length,
+    data_final:S.final,
+    data_state:S.state.map(s=>({state:s.state,stations:s.stations,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,ble_installed:s.ble_installed,iso_installed:s.iso_installed})),
+    data_txn:S.txn,data_cust:S.cust};
+  const {error}=await sb.from('reports').insert(payload);
+  if(error){console.warn('Report sync failed:',error.message);}else{console.log('Report synced');}
+}catch(e){console.warn('Report sync error:',e);}}
 
 function fmt(n){return (typeof n==='number'?Math.round(n):0).toLocaleString('en-IN');}
 function pclass(p){return p>=60?'p-hi':p>=30?'p-md':'p-lo';}
 
 function renderStats(){const totTxn=S.final.reduce((a,b)=>a+b.txn,0);const totMob=S.final.reduce((a,b)=>a+b.mob,0);
   const totCust=S.final.reduce((a,b)=>a+b.custMob,0);const pct=totTxn?(totCust/totTxn*100).toFixed(1):0;
-  const bleInst=S.final.filter(r=>r.ble==='Y').length;
-  const isoInst=S.final.filter(r=>r.iso==='Y').length;
+  const bleInst=S.final.filter(r=>r.ble==='Y').length;const isoInst=S.final.filter(r=>r.iso==='Y').length;
   const s=[['&#127978;','Stations',S.final.length,'r-blue'],['&#128506;','States',S.state.length,'r-indigo'],
     ['&#128246;','BLE-Mapped (Txn)',fmt(totMob),'r-teal'],['&#128101;','Customer Txns',fmt(totCust),'r-amber'],
     ['&#127919;','Overall BLE %',pct+'%','r-green'],
@@ -589,7 +448,6 @@ function renderStats(){const totTxn=S.final.reduce((a,b)=>a+b.txn,0);const totMo
     ['&#128268;','Isolator',isoInst+' / '+S.final.length,'r-indigo']];
   document.getElementById('stats').innerHTML=s.map(x=>'<div class="stat"><div class="ribbon '+x[3]+'">'+x[0]+'</div><div class="n">'+x[2]+'</div><div class="l">'+x[1]+'</div></div>').join('');}
 
-/* ---- column picker UI ---- */
 function renderColPicker(){const host=document.getElementById('colopts');const cols=COLS[S.cur];
   host.innerHTML=cols.map(c=>{const on=VISIBLE[S.cur][c.k];const lk=c.lock?'locked':'';
     return '<label class="ckrow '+lk+'"><input type="checkbox" data-k="'+c.k+'" '+(on?'checked':'')+' '+(c.lock?'disabled':'')+'>'+c.l+'</label>';}).join('');
@@ -598,7 +456,6 @@ document.getElementById('colbtn').onclick=e=>{e.stopPropagation();document.getEl
 document.addEventListener('click',()=>document.getElementById('colmenu').classList.remove('open'));
 document.getElementById('colmenu').onclick=e=>e.stopPropagation();
 
-/* ---- cell renderer ---- */
 function cell(row,k,ctx){
   if(k==='erp')return '<td class="erp">'+row.erp+'</td>';
   if(k==='name')return '<td class="stn">'+row.name+'</td>';
@@ -614,8 +471,7 @@ function cell(row,k,ctx){
   if(k==='iso'){const v=row.iso;if(v==='Y')return '<td><span class="pill p-hi">Yes</span></td>';if(v==='N')return '<td><span class="pill p-lo">No</span></td>';return '<td><span class="pill" style="background:#f2f5fa;color:var(--soft)">\u2014</span></td>';}
   if(k==='ble_installed')return '<td class="num">'+fmt(row.ble_installed)+'</td>';
   if(k==='iso_installed')return '<td class="num">'+fmt(row.iso_installed)+'</td>';
-  return '<td></td>';
-}
+  return '<td></td>';}
 function activeCols(){return COLS[S.cur].filter(c=>VISIBLE[S.cur][c.k]);}
 function headRow(extraLead){const cols=activeCols();const interactive=true;let h=extraLead||'';
   h+=cols.map(c=>{const isNum=NUMK.includes(c.k);
@@ -627,7 +483,6 @@ function headRow(extraLead){const cols=activeCols();const interactive=true;let h
     return '<th class="'+cls+'" '+(interactive?'data-sk="'+c.k+'"':'')+' style="'+(isNum?'text-align:right':'')+'"><span class="th-in">'+c.l+(interactive?' <span class="sortar">'+ar+'</span> '+fbtn:'')+'</span></th>';
   }).join('');return h;}
 
-/* numeric value for sort/filter */
 function rawVal(row,k){
   if(k==='pct')return row.pct;
   if(['txn','mob','custMob','count','stations','ble_installed','iso_installed'].includes(k))return row[k]||0;
@@ -636,26 +491,19 @@ function rawVal(row,k){
   if(k==='station')return row.station||'';
   if(k==='erp')return row.erp||'';
   if(k==='ble'||k==='iso'){const v=row[k];if(v==='Y')return 'Yes';if(v==='N')return 'No';return '-';}
-  return row[k]!==undefined?row[k]:'';
-}
-function subtotalRow(rows){
-  /* Build the totals row HTML based on currently active columns and filtered rows */
-  const cols=activeCols();
+  return row[k]!==undefined?row[k]:'';}
+function subtotalRow(rows){const cols=activeCols();
   const sums={txn:0,mob:0,custMob:0,count:0,stations:0,ble_installed:0,iso_installed:0};
-  let bleY=0,bleN=0,bleU=0,isoY=0,isoN=0,isoU=0;
-  const states=new Set();
-  rows.forEach(r=>{
-    if(r._type==='STATE'){return;} /* skip parent-state rows when state tab expanded */
+  let bleY=0,bleN=0,bleU=0,isoY=0,isoN=0,isoU=0;const states=new Set();
+  rows.forEach(r=>{if(r._type==='STATE'){return;}
     Object.keys(sums).forEach(k=>{if(typeof r[k]==='number')sums[k]+=r[k];});
     if(r.state)states.add(r.state);
     if(r.ble==='Y')bleY++;else if(r.ble==='N')bleN++;else if(r.ble)bleU++;
-    if(r.iso==='Y')isoY++;else if(r.iso==='N')isoN++;else if(r.iso)isoU++;
-  });
+    if(r.iso==='Y')isoY++;else if(r.iso==='N')isoN++;else if(r.iso)isoU++;});
   const totalCount=rows.filter(r=>r._type!=='STATE').length;
   const weightedPct=sums.txn>0?(sums.custMob/sums.txn*100):0;
   let tds='';
-  cols.forEach((c,i)=>{
-    const k=c.k;
+  cols.forEach((c,i)=>{const k=c.k;
     if(i===0){tds+='<td><span class="stlbl">Subtotal</span>'+fmt(totalCount)+' '+(totalCount===1?'row':'rows')+'</td>';return;}
     if(k==='name'||k==='station'){tds+='<td></td>';return;}
     if(k==='state'){tds+='<td>'+(states.size?'<span class="stlbl">States</span>'+states.size:'')+'</td>';return;}
@@ -669,10 +517,8 @@ function subtotalRow(rows){
     if(k==='iso'){tds+='<td><span class="yn">'+isoY+' / '+totalCount+'</span></td>';return;}
     if(k==='ble_installed'){tds+='<td class="num">'+fmt(sums.ble_installed)+'</td>';return;}
     if(k==='iso_installed'){tds+='<td class="num">'+fmt(sums.iso_installed)+'</td>';return;}
-    tds+='<td></td>';
-  });
-  return '<tr class="subtotal-row">'+tds+'</tr>';
-}
+    tds+='<td></td>';});
+  return '<tr class="subtotal-row">'+tds+'</tr>';}
 
 function applyFilters(rows){const f=FILT[S.cur];const keys=Object.keys(f);if(!keys.length)return rows;
   return rows.filter(r=>keys.every(k=>{const cond=f[k];const v=rawVal(r,k);
@@ -696,14 +542,11 @@ function render(){renderColPicker();
     let filt=S.state.filter(s=>!q||norm(s.state).includes(q)||s.children.some(c=>norm(c.name).includes(q)||norm(c.erp).includes(q)));
     filt=applyFilters(filt);filt=applySort(filt);
     let rows='';
-    filt.forEach((s,i)=>{
-      const id='st'+i;const isOpen=!!S.open[s.state];
-      // state row (lead = caret+name handled specially)
+    filt.forEach((s,i)=>{const isOpen=!!S.open[s.state];
       let r='<tr class="strow '+(isOpen?'open':'')+'" data-st="'+s.state+'">';
       cols.forEach(c=>{
         if(c.k==='state'){r+='<td><span class="stname"><span class="caret">&#9656;</span><span class="state-chip" style="font-weight:700;color:var(--ink)">'+s.state+'</span></span></td>';}
-        else r+=cell(s,c.k,null).replace('<td','<td');
-      });
+        else r+=cell(s,c.k,null).replace('<td','<td');});
       r+='</tr>';rows+=r;
       if(isOpen){const max=Math.max.apply(null,s.children.map(c=>c.txn).concat([1]));
         s.children.filter(c=>!q||norm(c.name).includes(q)||norm(c.erp).includes(q)||norm(s.state).includes(q)).forEach(ch=>{
@@ -711,14 +554,10 @@ function render(){renderColPicker();
           cols.forEach(c=>{
             if(c.k==='state'){cr+='<td><span class="stname" style="padding-left:24px"><span class="erp">'+ch.erp+'</span> &nbsp; <span class="stn">'+ch.name+'</span></span></td>';}
             else if(c.k==='stations'){cr+='<td class="num">\u2014</td>';}
-            else cr+=cell(ch,c.k,{max:max});
-          });
-          cr+='</tr>';rows+=cr;});}
-    });
-    /* compute subtotal across the visible state rows + their visible children */
+            else cr+=cell(ch,c.k,{max:max});});
+          cr+='</tr>';rows+=cr;});}});
     const stRowsForTotal=[];filt.forEach(s=>{stRowsForTotal.push(Object.assign({_type:'STATE'},s));
-      if(S.open[s.state]){s.children.filter(c=>!q||norm(c.name).includes(q)||norm(c.erp).includes(q)||norm(s.state).includes(q)).forEach(ch=>stRowsForTotal.push(ch));}
-    });
+      if(S.open[s.state]){s.children.filter(c=>!q||norm(c.name).includes(q)||norm(c.erp).includes(q)||norm(s.state).includes(q)).forEach(ch=>stRowsForTotal.push(ch));}});
     const subt=subtotalRow(stRowsForTotal.length?stRowsForTotal:filt.map(s=>Object.assign({_type:'STATE'},s)));
     inner='<table><thead><tr>'+headRow()+'</tr></thead><tbody>'+(rows?subt+rows:'<tr><td class="empty" colspan="9">No matching rows</td></tr>')+'</tbody></table>';
   }else{
@@ -734,25 +573,18 @@ function render(){renderColPicker();
     const max=Math.max.apply(null,filt.map(r=>r.txn||0).concat([1]));
     const body=filt.map(r=>'<tr>'+cols.map(c=>cell(r,c.k,(c.k==='txn'&&S.cur==='final')?{max:max}:null)).join('')+'</tr>').join('');
     const subt=subtotalRow(filt);
-    inner='<table><thead><tr>'+headRow()+'</tr></thead><tbody>'+(body?subt+body:'<tr><td class="empty" colspan="9">No matching rows</td></tr>')+'</tbody></table>';
-  }
+    inner='<table><thead><tr>'+headRow()+'</tr></thead><tbody>'+(body?subt+body:'<tr><td class="empty" colspan="9">No matching rows</td></tr>')+'</tbody></table>';}
   document.getElementById('tabtitle').textContent=title;document.getElementById('note').innerHTML=note;
   document.getElementById('tblhost').innerHTML=inner;
-  // bind state expand
   document.querySelectorAll('.strow').forEach(tr=>tr.onclick=()=>{const st=tr.dataset.st;S.open[st]=!S.open[st];render();});
-  // bind header sort
   document.querySelectorAll('th.sortable').forEach(th=>{th.onclick=e=>{
-    if(e.target.classList.contains('fbtn'))return; // ignore filter icon clicks
+    if(e.target.classList.contains('fbtn'))return;
     const k=th.dataset.sk;const cur=SORT[S.cur];
     SORT[S.cur]=(cur&&cur.key===k)?(cur.dir==='desc'?{key:k,dir:'asc'}:null):{key:k,dir:'desc'};
     render();};});
-  // bind filter icons
-  document.querySelectorAll('.fbtn').forEach(b=>{b.onclick=e=>{e.stopPropagation();openFilter(b.dataset.fk,b);};});
-}
+  document.querySelectorAll('.fbtn').forEach(b=>{b.onclick=e=>{e.stopPropagation();openFilter(b.dataset.fk,b);};});}
 
-/* ---- per-column filter popover ---- */
-function openFilter(k,anchor){
-  const pop=document.getElementById('fpop');const col=COLS[S.cur].find(c=>c.k===k);
+function openFilter(k,anchor){const pop=document.getElementById('fpop');const col=COLS[S.cur].find(c=>c.k===k);
   const isNum=['txn','mob','custMob','pct','count','stations'].includes(k);
   const cur=FILT[S.cur][k]||{};
   let inner='<h6>Filter: '+col.l+'</h6>';
@@ -761,8 +593,7 @@ function openFilter(k,anchor){
   inner+='<div class="fpop-act"><button class="fp-clear">Clear</button><button class="fp-apply">Apply</button></div>';
   pop.innerHTML=inner;
   const r=anchor.getBoundingClientRect();
-  pop.style.top=(r.bottom+6)+'px';
-  pop.style.left=Math.min(r.left-90,window.innerWidth-225)+'px';
+  pop.style.top=(r.bottom+6)+'px';pop.style.left=Math.min(r.left-90,window.innerWidth-225)+'px';
   pop.classList.add('open');
   setTimeout(()=>{const fi=pop.querySelector('input');if(fi)fi.focus();},30);
   pop.querySelector('.fp-apply').onclick=()=>{
@@ -771,8 +602,7 @@ function openFilter(k,anchor){
     else{const tx=document.getElementById('ftext').value.trim();
       if(!tx)delete FILT[S.cur][k];else FILT[S.cur][k]={text:tx};}
     pop.classList.remove('open');render();};
-  pop.querySelector('.fp-clear').onclick=()=>{delete FILT[S.cur][k];pop.classList.remove('open');render();};
-}
+  pop.querySelector('.fp-clear').onclick=()=>{delete FILT[S.cur][k];pop.classList.remove('open');render();};}
 document.addEventListener('click',e=>{const pop=document.getElementById('fpop');
   if(pop&&pop.classList.contains('open')&&!pop.contains(e.target)&&!e.target.classList.contains('fbtn'))pop.classList.remove('open');});
 
@@ -780,64 +610,47 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelect
   t.classList.add('active');S.cur=t.dataset.t;render();});
 document.getElementById('search').oninput=render;
 
-/* ---- download dropdown toggle ---- */
 document.getElementById('dlbtn').onclick=e=>{e.stopPropagation();document.getElementById('dlmenu').classList.toggle('open');document.getElementById('colmenu').classList.remove('open');};
 document.getElementById('dlmenu').onclick=e=>e.stopPropagation();
 document.addEventListener('click',()=>document.getElementById('dlmenu').classList.remove('open'));
 
-function valOf(row,k){
-  if(k==='pct')return +row.pct.toFixed(2);
-  if(k==='state')return row.state||'';
-  return row[k]!==undefined?row[k]:'';
-}
-/* rows for current tab honoring search filter (state tab flattened: state rows + their stations) */
-function filteredRows(){
-  const q=norm(document.getElementById('search').value);
-  if(S.cur==='state'){
-    const out=[];
+function valOf(row,k){if(k==='pct')return +row.pct.toFixed(2);
+  if(k==='state')return row.state||'';return row[k]!==undefined?row[k]:'';}
+function filteredRows(){const q=norm(document.getElementById('search').value);
+  if(S.cur==='state'){const out=[];
     S.state.filter(s=>!q||norm(s.state).includes(q)||s.children.some(c=>norm(c.name).includes(q)||norm(c.erp).includes(q))).forEach(s=>{
       out.push({_type:'STATE',state:s.state,stations:s.stations,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct});
       s.children.filter(c=>!q||norm(c.name).includes(q)||norm(c.erp).includes(q)||norm(s.state).includes(q))
-        .forEach(c=>out.push(Object.assign({_type:'  station'},c)));
-    });
-    return out;
-  }
+        .forEach(c=>out.push(Object.assign({_type:'  station'},c)));});
+    return out;}
   const data=S.cur==='final'?S.final:S.cur==='txn'?S.txn:S.cust;
   let out=data.filter(r=>!q||norm(r.erp).includes(q)||norm(r.name||r.station).includes(q)||norm(r.state).includes(q));
-  out=applyFilters(out);out=applySort(out);return out;
-}
+  out=applyFilters(out);out=applySort(out);return out;}
 
-/* Option 1: download exactly what is on screen (active tab + chosen columns + search) */
-document.getElementById('dl-filtered').onclick=()=>{
-  const cols=activeCols();const rows=filteredRows();
+document.getElementById('dl-filtered').onclick=()=>{const cols=activeCols();const rows=filteredRows();
   const aoa=rows.map(r=>{const o={};
     cols.forEach(c=>{
       if(S.cur==='state'&&c.k==='state'){o['State / Station']=(r._type==='STATE')?r.state:('   '+r.erp+'  '+r.name);return;}
       if(S.cur==='state'&&c.k==='stations'&&r._type!=='STATE'){o[c.l]='';return;}
-      o[c.l]=valOf(r,c.k);
-    });return o;});
+      o[c.l]=valOf(r,c.k);});return o;});
   const wb=XLSX.utils.book_new();
   const sheetName={final:'Final (filtered)',state:'State (filtered)',txn:'Transaction (filtered)',cust:'Customer (filtered)'}[S.cur];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aoa.length?aoa:[{Info:'No rows'}]),sheetName);
   XLSX.writeFile(wb,'BLE_'+sheetName.replace(/[^A-Za-z]/g,'_')+'.xlsx');
-  document.getElementById('dlmenu').classList.remove('open');
-};
+  document.getElementById('dlmenu').classList.remove('open');};
 
-/* Option 2: full workbook, all tabs, all columns */
-document.getElementById('dl-complete').onclick=()=>{
-  const wb=XLSX.utils.book_new();
+document.getElementById('dl-complete').onclick=()=>{const wb=XLSX.utils.book_new();
   const bleText=v=>v==='Y'?'Yes':v==='N'?'No':'-';
   const f=S.final.map(r=>({ERP:r.erp,Station:r.name,State:r.state,'Device/Txn Total':r.txn,'Mobile No Count':r.mob,'Customer Mobile Total':r.custMob,'BLE %':+r.pct.toFixed(2),'BLE Installed':bleText(r.ble),'Isolator':bleText(r.iso)}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(f),'Final Comparison');
   const stt=S.state.map(s=>({State:s.state,Stations:s.stations,'Device/Txn Total':s.txn,'Mobile No Count':s.mob,'Customer Mobile Total':s.custMob,'BLE %':+s.pct.toFixed(2),'BLE Installed (#)':s.ble_installed||0,'Isolator (#)':s.iso_installed||0}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(stt),'State Analysis');
-  const t=S.txn.map(r=>{const m=masterLookup(r.erp);const bv=m?(m.ble==='Y'?'Yes':'No'):'-';const iv=m?(m.iso==='Y'?'Yes':'No'):'-';return{ERP:r.erp,Station:r.name,State:r.state,'Device/Txn Total':r.txn,'Mobile No Count':r.mob,'BLE Installed':bv,'Isolator':iv};});
+  const t=S.txn.map(r=>{const m=masterLookup(r.erp);const bv=m?(m.b==='Y'?'Yes':'No'):'-';const iv=m?(m.i==='Y'?'Yes':'No'):'-';return{ERP:r.erp,Station:r.name,State:r.state,'Device/Txn Total':r.txn,'Mobile No Count':r.mob,'BLE Installed':bv,'Isolator':iv};});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(t),'Transaction Report');
   const c=S.cust.map(r=>({Station:r.station,State:r.state,'Mobile Txn Count':r.count}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(c),'Customer Report');
   XLSX.writeFile(wb,'BLE_Transaction_Tracker_Complete.xlsx');
-  document.getElementById('dlmenu').classList.remove('open');
-};
+  document.getElementById('dlmenu').classList.remove('open');};
 </script>
 </body>
 </html>
