@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Management System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#10203a; --mut:#6b7a90; --soft:#9aa7ba;
+    --line:#e6ebf3; --line2:#eef2f8;
+    --blue:#2f6bff; --purple:#7c3aed; --green:#16b364; --amber:#f5a524; --rose:#f24e6e;
+    --grad-purple:linear-gradient(135deg,#7c3aed,#a855f7);
+    --shadow:0 1px 2px rgba(16,32,58,.04),0 8px 24px rgba(16,32,58,.06);
+    --shadow-lg:0 12px 40px rgba(16,32,58,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:
+    radial-gradient(1100px 600px at 100% -10%,rgba(124,58,237,.07),transparent 60%),
+    radial-gradient(900px 500px at -5% 0%,rgba(168,85,247,.06),transparent 55%),
+    var(--bg);color:var(--ink);min-height:100vh;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:4px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{width:52px;height:52px;border-radius:15px;background:var(--grad-purple);display:grid;place-items:center;font-weight:800;color:#fff;font-size:16px;letter-spacing:.5px;box-shadow:0 10px 24px rgba(124,58,237,.30)}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+  .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .userbox{display:flex;align-items:center;gap:14px}
+  .uinfo{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow)}
+  .uavatar{width:32px;height:32px;border-radius:50%;background:var(--grad-purple);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+  .uname{font-size:13px;font-weight:700;line-height:1.1}
+  .urole{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-top:2px}
+  .ulink{font-size:12.5px;font-weight:700;color:var(--purple);text-decoration:none;padding:9px 14px;border:1.5px solid var(--purple);border-radius:10px;transition:.15s}
+  .ulink:hover{background:var(--purple);color:#fff}
+  .ubtn{font-size:12.5px;font-weight:600;color:var(--mut);background:var(--card);border:1.5px solid var(--line);padding:9px 14px;border-radius:10px;cursor:pointer;font-family:inherit;transition:.15s}
+  .ubtn:hover{border-color:var(--rose);color:var(--rose)}
+  body.gate{display:grid;place-items:center}
+  body.gate .wrap{display:none}
+  .gatewrap{text-align:center}
+  .gatewrap .spin{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Access-denied screen */
+  .deny{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:60px 40px;text-align:center;box-shadow:var(--shadow-lg);max-width:560px;margin:60px auto 0;position:relative;overflow:hidden}
+  .deny::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--grad-purple)}
+  .denyicon{width:84px;height:84px;border-radius:50%;background:rgba(124,58,237,.10);color:var(--purple);display:grid;place-items:center;font-size:36px;margin:8px auto 22px}
+  .deny h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px}
+  .deny p{color:var(--mut);font-size:14px;line-height:1.65;margin-bottom:24px;max-width:430px;margin-left:auto;margin-right:auto}
+  .deny .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .btn-back{background:#fff;border:1.5px solid var(--line);color:var(--ink);padding:11px 22px;border-radius:11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+  .btn-back:hover{border-color:var(--purple);color:var(--purple)}
+  .deny .note{margin-top:24px;padding:14px 16px;background:rgba(124,58,237,.06);border-radius:12px;font-size:12.5px;color:var(--mut);border-left:3px solid var(--purple);text-align:left}
+  .deny .note b{color:var(--ink)}
+
+  /* Active screen */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:42px;text-align:center;box-shadow:var(--shadow);max-width:680px;margin:32px auto 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--grad-purple)}
+  .panel .icn{font-size:42px;margin-bottom:8px}
+  .panel h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
+  .panel p{color:var(--mut);font-size:14px;line-height:1.65;margin-bottom:20px}
+  .panel .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .opt{background:#fafbfe;border:1.5px dashed var(--line);border-radius:14px;padding:24px 18px;text-align:left;cursor:not-allowed;opacity:.7}
+  .opt h4{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+  .opt p{font-size:12px;color:var(--mut);line-height:1.55;margin:0}
+  .opt .badge{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:30px;background:rgba(245,165,36,.18);color:#c47e0a;margin-top:10px}
+  @media (max-width:560px){.panel .opts{grid-template-columns:1fr}}
+
+  .siteft{margin-top:48px;padding:14px 4px;color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line2)}
+  .siteft b{color:var(--mut);font-weight:600}
+</style>
+</head>
+<body class="gate">
+<div class="gatewrap" id="gate"><div class="spin"></div><p>Checking access…</p></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">QR</div>
+      <div>
+        <h1>QR Management System</h1>
+        <div class="sub">Prepare and track QR code shipments across stations</div>
+      </div>
+    </div>
+    <div class="userbox" id="userbox" style="display:none">
+      <div class="uinfo"><div class="uavatar" id="uavatar">?</div><div><div class="uname" id="uname">…</div><div class="urole" id="urole">user</div></div></div>
+      <a class="ulink" href="./index.html">&larr; Home</a>
+      <button class="ubtn" id="logoutbtn">Sign out</button>
+    </div>
+  </header>
+
+  <!-- ACCESS DENIED -->
+  <div class="deny" id="denyView" style="display:none">
+    <div class="denyicon">&#128274;</div>
+    <h2>Access Restricted</h2>
+    <p>This module is currently restricted. Please <b>contact the admin</b> to request access to the QR Management System.</p>
+    <div class="ctas">
+      <a class="btn-back" href="./index.html">&larr; Back to Platform</a>
+    </div>
+    <div class="note">
+      <b>Note for admin:</b> Open the Admin panel &rarr; edit the user &rarr; toggle <b>"QR Management Access"</b> to ON.
+    </div>
+  </div>
+
+  <!-- ACTIVE (placeholder for module under construction) -->
+  <div class="panel" id="activeView" style="display:none">
+    <div class="icn">&#128241;</div>
+    <h2>QR Management &mdash; Module under construction</h2>
+    <p>The full module is being built. You will be able to prepare QR shipment data and view a complete dashboard of all QRs sent across the network with filters.</p>
+    <div class="opts">
+      <div class="opt">
+        <h4>&#128221; Prepare QR Data</h4>
+        <p>Enter new QR shipment details in a standard format and save them to the system.</p>
+        <span class="badge">COMING SOON</span>
+      </div>
+      <div class="opt">
+        <h4>&#128202; Dashboard View</h4>
+        <p>See every QR shipment ever sent, with filters by date, state, location, and more.</p>
+        <span class="badge">COMING SOON</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="siteft">Developed by <b>Sunny Gupta</b> &middot; QR Management System &copy; <span id="yr"></span></div>
+</div>
+
+<script>
+if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif"><h2>Configuration missing</h2></div>';
+  throw new Error('Missing Supabase config');
+}
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+(async function gate(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='./login.html';return;}
+  const user=session.user;
+  const {data:profile,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!profile){await sb.auth.signOut();window.location.href='./login.html';return;}
+  document.getElementById('uname').textContent=profile.full_name||profile.email.split('@')[0];
+  document.getElementById('urole').textContent=profile.role;
+  document.getElementById('uavatar').textContent=(profile.full_name||profile.email).trim().charAt(0).toUpperCase();
+  document.getElementById('userbox').style.display='flex';
+  const isAdmin=profile.role==='admin';
+  const perms=profile.permissions||{};
+  const hasQR=isAdmin||perms.qr_management===true;
+  document.body.classList.remove('gate');document.getElementById('gate').style.display='none';
+  document.getElementById(hasQR?'activeView':'denyView').style.display='block';
+})();
+document.getElementById('logoutbtn').onclick=async()=>{await sb.auth.signOut();window.location.href='./login.html';};
+sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='./login.html';});
+</script>
+</body>
+</html>

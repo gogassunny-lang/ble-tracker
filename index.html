@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · BLE Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#10203a; --mut:#6b7a90; --soft:#9aa7ba;
+    --line:#e6ebf3; --line2:#eef2f8;
+    --teal:#0fb6a0; --teal-d:#0a8f7e; --blue:#2f6bff; --blue-d:#1d4fd1;
+    --indigo:#5b5bf0; --amber:#f5a524; --rose:#f24e6e; --green:#16b364;
+    --grad:linear-gradient(135deg,#2f6bff,#0fb6a0);
+    --grad-purple:linear-gradient(135deg,#7c3aed,#a855f7);
+    --shadow:0 1px 2px rgba(16,32,58,.04),0 8px 24px rgba(16,32,58,.06);
+    --shadow-lg:0 12px 40px rgba(16,32,58,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:
+    radial-gradient(1100px 600px at 100% -10%,rgba(47,107,255,.06),transparent 60%),
+    radial-gradient(900px 500px at -5% 0%,rgba(15,182,160,.06),transparent 55%),
+    var(--bg);color:var(--ink);min-height:100vh;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:4px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:16px}
+  .logo{width:52px;height:52px;border-radius:15px;background:var(--grad);display:grid;place-items:center;font-weight:800;color:#fff;font-size:16px;letter-spacing:.5px;box-shadow:0 10px 24px rgba(47,107,255,.30)}
+  h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--mut);font-size:13.5px;margin:6px 0 32px 68px;line-height:1.6}
+  .userbox{display:flex;align-items:center;gap:14px}
+  .uinfo{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;background:var(--card);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow)}
+  .uavatar{width:32px;height:32px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+  .uname{font-size:13px;font-weight:700;line-height:1.1}
+  .urole{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-top:2px}
+  .ulink{font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none;padding:9px 14px;border:1.5px solid var(--blue);border-radius:10px;transition:.15s}
+  .ulink:hover{background:var(--blue);color:#fff}
+  .ubtn{font-size:12.5px;font-weight:600;color:var(--mut);background:var(--card);border:1.5px solid var(--line);padding:9px 14px;border-radius:10px;cursor:pointer;font-family:inherit;transition:.15s}
+  .ubtn:hover{border-color:var(--rose);color:var(--rose)}
+  body.gate{display:grid;place-items:center}
+  body.gate .wrap{display:none}
+  .gatewrap{text-align:center}
+  .gatewrap .spin{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gatewrap p{color:var(--mut);font-size:13px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:22px;margin-top:32px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px;cursor:pointer;transition:.22s;position:relative;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:18px;min-height:240px;box-shadow:var(--shadow)}
+  .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--grad);opacity:.85}
+  .tile.qr::before{background:var(--grad-purple)}
+  .tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#d7e0ee}
+  .tile.locked{cursor:default;opacity:.86}
+  .tile.locked:hover{transform:none}
+  .ticon{width:60px;height:60px;border-radius:16px;background:var(--grad);color:#fff;display:grid;place-items:center;font-size:28px;box-shadow:0 10px 22px rgba(47,107,255,.20)}
+  .tile.qr .ticon{background:var(--grad-purple);box-shadow:0 10px 22px rgba(124,58,237,.22)}
+  .ttitle{font-size:22px;font-weight:800;letter-spacing:-.3px}
+  .tdesc{color:var(--mut);font-size:13.5px;line-height:1.55}
+  .tfoot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;color:var(--blue);font-weight:700;font-size:13.5px}
+  .tile.qr .tfoot{color:#7c3aed}
+  .tile.locked .tfoot{color:var(--mut)}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:30px;letter-spacing:.5px;background:rgba(245,165,36,.14);color:#c47e0a}
+  .pill.ok{background:rgba(22,179,100,.12);color:var(--green)}
+  .siteft{margin-top:48px;padding:14px 4px;color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line2)}
+  .siteft b{color:var(--mut);font-weight:600}
+</style>
+</head>
+<body class="gate">
+<div class="gatewrap" id="gate"><div class="spin"></div><p>Checking session…</p></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">BLE</div>
+      <div>
+        <h1>Platform</h1>
+        <div style="color:var(--mut);font-size:13px;margin-top:2px">Choose a module to continue</div>
+      </div>
+    </div>
+    <div class="userbox" id="userbox" style="display:none">
+      <div class="uinfo"><div class="uavatar" id="uavatar">?</div><div><div class="uname" id="uname">…</div><div class="urole" id="urole">user</div></div></div>
+      <a class="ulink" id="adminlink" href="./admin.html" style="display:none">Admin</a>
+      <button class="ubtn" id="logoutbtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="tiles">
+    <a class="tile" href="./ble-report.html">
+      <div class="ticon">&#128225;</div>
+      <div>
+        <div class="ttitle">BLE Report Dashboard</div>
+        <div class="tdesc" style="margin-top:8px">Upload daily Transaction and Customer reports, view BLE coverage station-wise and state-wise, compare both sources, and export Excel reports.</div>
+      </div>
+      <div class="tfoot">Open dashboard &rarr;</div>
+    </a>
+
+    <a class="tile qr" id="qrtile" href="./qr-management.html">
+      <div class="ticon">&#128241;</div>
+      <div>
+        <div class="ttitle">QR Management System <span class="pill" id="qrPill">Restricted</span></div>
+        <div class="tdesc" style="margin-top:8px">Prepare QR shipment data for stations, save to the system, and view a complete dashboard of all QRs sent across the network with filters.</div>
+      </div>
+      <div class="tfoot" id="qrFoot">Open module &rarr;</div>
+    </a>
+  </div>
+
+  <div class="siteft">Developed by <b>Sunny Gupta</b> &middot; BLE Platform &copy; <span id="yr"></span></div>
+</div>
+
+<script>
+if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif"><h2>Configuration missing</h2></div>';
+  throw new Error('Missing Supabase config');
+}
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+(async function gate(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='./login.html';return;}
+  const user=session.user;
+  const {data:profile,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!profile){await sb.auth.signOut();window.location.href='./login.html';return;}
+  document.getElementById('uname').textContent=profile.full_name||profile.email.split('@')[0];
+  document.getElementById('urole').textContent=profile.role;
+  document.getElementById('uavatar').textContent=(profile.full_name||profile.email).trim().charAt(0).toUpperCase();
+  if(profile.role==='admin')document.getElementById('adminlink').style.display='inline-flex';
+  document.getElementById('userbox').style.display='flex';
+  /* Update QR tile pill based on permission */
+  const isAdmin=profile.role==='admin';
+  const perms=profile.permissions||{};
+  const hasQR=isAdmin||perms.qr_management===true;
+  const pill=document.getElementById('qrPill');
+  const foot=document.getElementById('qrFoot');
+  if(hasQR){pill.textContent='Active';pill.classList.add('ok');foot.innerHTML='Open module &rarr;';}
+  else{pill.textContent='Restricted';foot.textContent='Click to request access';}
+  document.body.classList.remove('gate');document.getElementById('gate').style.display='none';
+})();
+
+document.getElementById('logoutbtn').onclick=async()=>{await sb.auth.signOut();window.location.href='./login.html';};
+sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='./login.html';});
+</script>
+</body>
+</html>
