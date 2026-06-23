@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Management System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,6 +63,14 @@
   .r-blue{background:rgba(47,107,255,.10);color:var(--blue)}
   .r-amber{background:rgba(245,165,36,.14);color:#c47e0a}
   .r-green{background:rgba(22,179,100,.12);color:var(--green)}
+  .r-rose{background:rgba(242,78,110,.12);color:var(--rose)}
+
+  /* Status cell — click to cycle through received/missing/blank */
+  .stcell{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:800;background:#f4f7fc;color:var(--soft);transition:.15s;border:1.5px solid transparent;user-select:none}
+  .stcell:hover{background:#e8eefb;border-color:var(--purple)}
+  .stcell.recv{background:rgba(22,179,100,.14);color:var(--green)}
+  .stcell.miss{background:rgba(242,78,110,.14);color:var(--rose)}
+  .stcell.busy{opacity:.5;pointer-events:none}
 
   .tabs{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:2}
   .tab{padding:11px 22px;border-radius:12px 12px 0 0;background:transparent;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13.5px;color:var(--mut);font-weight:600;transition:.15s}
@@ -180,13 +189,17 @@
           <strong id="prepTitle">Available bunches (pending dispatch)</strong>
           <div class="head-actions">
             <div class="filter-bar">
-              <span class="lbl">Status</span>
+              <span class="lbl">View</span>
               <select id="statusFilter">
                 <option value="all">All</option>
                 <option value="available" selected>Available</option>
                 <option value="dispatched">Dispatched</option>
+                <option value="missing">Missing</option>
               </select>
             </div>
+            <button class="btn" id="dl-available" title="Download Available (received, not dispatched)">&#8595; Available</button>
+            <button class="btn" id="dl-missing" title="Download Missing">&#8595; Missing</button>
+            <button class="btn" id="dl-all" title="Download all data">&#8595; All Data</button>
             <button class="btn btn-primary" id="newBatchBtn">+ New Print Batch</button>
           </div>
         </div>
@@ -298,19 +311,20 @@ async function loadStats(){
 }
 async function loadBunches(){
   const status=S.filterStatus==='all'?null:S.filterStatus;
-  const {data,error}=await sb.rpc('qr_list_bunches',{p_status:status});
+  const {data,error}=await sb.rpc('qr_list_bunches',{p_filter:status});
   if(error){toast(error.message,'err');return;}
   S.bunches=data||[];renderBunches();
 }
 async function loadAll(){await Promise.all([loadStats(),loadBunches()]);}
 
 function renderStats(){
-  const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_qty_available:0,total_qty_dispatched:0,total_batches:0};
+  const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_missing:0,total_received:0,total_qty_available:0,total_qty_dispatched:0,total_qty_missing:0,total_batches:0};
   const cards=[
     ['&#128230;','Print Batches',s.total_batches,'r-purple'],
     ['&#128220;','Total Bunches',s.total_bunches,'r-blue'],
-    ['&#9203;','Available (Pending)',s.total_available,'r-amber'],
+    ['&#9203;','Available',s.total_available,'r-amber'],
     ['&#9989;','Dispatched',s.total_dispatched,'r-green'],
+    ['&#10060;','Missing',s.total_missing,'r-rose'],
     ['&#128202;','QR Codes Available',fmtN(s.total_qty_available),'r-amber'],
     ['&#128640;','QR Codes Dispatched',fmtN(s.total_qty_dispatched),'r-green']
   ];
@@ -328,14 +342,15 @@ document.getElementById('newBatchBtn').onclick=()=>{
 function stateOpts(sel){return STATES.map(s=>'<option value="'+s+'"'+(sel===s?' selected':'')+'>'+s+'</option>').join('');}
 
 function renderBunches(){
-  const titleMap={available:'Available bunches (pending dispatch)',dispatched:'Dispatched bunches',all:'All bunches'};
+  const titleMap={available:'Available bunches (pending dispatch)',dispatched:'Dispatched bunches',missing:'Missing bunches',all:'All bunches'};
   document.getElementById('prepTitle').textContent=titleMap[S.filterStatus]+' ('+S.bunches.length+')';
   if(!S.bunches.length){
     document.getElementById('bunchHost').innerHTML='<div class="empty">No bunches to show. Click <b>+ New Print Batch</b> to start.</div>';
     return;
   }
   const head='<tr>'+
-    '<th>Status</th><th>Series</th><th class="num">Count</th>'+
+    '<th title="Click to mark received (\u2713) / missing (\u2717) / unmarked">Status</th>'+
+    '<th>Start Series</th><th>End Series</th><th class="num">Count</th>'+
     '<th>Box No</th><th>SS Name</th><th>Allotted Station</th>'+
     '<th>State</th><th>Dispatch Date</th><th class="num">Dispatch Qty</th>'+
     '<th>Last Updated</th><th></th></tr>';
@@ -343,10 +358,15 @@ function renderBunches(){
     const dispatched=b.status==='dispatched';
     const lockedForUser=dispatched && !IS_ADMIN;
     const lockCls=lockedForUser?'locked':'';
-    const chip='<span class="chip '+(dispatched?'dp':'av')+'">'+(dispatched?'Dispatched':'Available')+'</span>';
+    /* status cell content */
+    let stCls='stcell',stTxt='';
+    if(b.received==='received'){stCls+=' recv';stTxt='\u2713';}
+    else if(b.received==='missing'){stCls+=' miss';stTxt='\u2717';}
+    const statusCell='<span class="'+stCls+'" data-act="toggle-status" title="Click to cycle: \u2713 received / \u2717 missing / unmarked">'+stTxt+'</span>';
     return '<tr data-id="'+b.id+'">'+
-      '<td>'+chip+'</td>'+
-      '<td class="ser">'+b.start_series+' &ndash; '+b.end_series+'</td>'+
+      '<td>'+statusCell+'</td>'+
+      '<td class="ser">'+b.start_series+'</td>'+
+      '<td class="ser">'+b.end_series+'</td>'+
       '<td class="num">'+fmtN(b.qty)+'</td>'+
       '<td class="'+lockCls+'"><input data-f="box_no" type="text" value="'+escapeHTML(b.box_no)+'" '+(lockedForUser?'disabled':'')+' placeholder="Box #"></td>'+
       '<td class="'+lockCls+'"><input data-f="ss_name" type="text" value="'+escapeHTML(b.ss_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="SS / Sales staff"></td>'+
@@ -354,7 +374,7 @@ function renderBunches(){
       '<td class="'+lockCls+'"><select data-f="state" '+(lockedForUser?'disabled':'')+'><option value="">—</option>'+stateOpts(b.state)+'</select></td>'+
       '<td class="'+lockCls+'"><input data-f="dispatch_date" type="date" value="'+(b.dispatch_date||'')+'" '+(lockedForUser?'disabled':'')+'></td>'+
       '<td class="'+lockCls+' num"><input data-f="total_dispatch_quantity" type="number" min="0" value="'+(b.total_dispatch_quantity==null?'':b.total_dispatch_quantity)+'" '+(lockedForUser?'disabled':'')+' placeholder="Qty"></td>'+
-      '<td class="mono">'+fmtDateTime(b.updated_at)+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'</td>'+
+      '<td class="mono">'+(b.updated_at?fmtDateTime(b.updated_at):'—')+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'</td>'+
       '<td style="white-space:nowrap;text-align:right">'+
         (lockedForUser?'<span class="chip dp">Locked</span>':
           '<button class="btn btn-sm" data-act="save">Save</button>'+
@@ -365,6 +385,16 @@ function renderBunches(){
   document.getElementById('bunchHost').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
   document.querySelectorAll('button[data-act="save"]').forEach(b=>b.onclick=onSaveRow);
   document.querySelectorAll('button[data-act="reset"]').forEach(b=>b.onclick=onResetRow);
+  document.querySelectorAll('[data-act="toggle-status"]').forEach(el=>el.onclick=onToggleStatus);
+}
+
+async function onToggleStatus(e){
+  const cell=e.currentTarget;const tr=cell.closest('tr');const id=tr.dataset.id;
+  cell.classList.add('busy');
+  const {data,error}=await sb.rpc('qr_toggle_received',{p_bunch_id:id});
+  if(error){toast(error.message,'err');cell.classList.remove('busy');return;}
+  /* Re-load to keep stats + filter view consistent */
+  await loadAll();
 }
 
 async function onSaveRow(e){
@@ -428,6 +458,39 @@ document.getElementById('b-create').onclick=async()=>{
   closeModal('batch-modal');toast('Batch created','ok');S.filterStatus='available';document.getElementById('statusFilter').value='available';
   await loadAll();btn.disabled=false;btn.textContent='Create Batch';
 };
+
+/* ===========================
+   Excel downloads
+   =========================== */
+async function fetchFilterAndDownload(filter, sheetName, fileName){
+  const {data,error}=await sb.rpc('qr_list_bunches',{p_filter:filter});
+  if(error){toast(error.message,'err');return;}
+  if(!data || !data.length){toast('No rows to export','err');return;}
+  const rows=data.map(b=>({
+    'Start Series':b.start_series,
+    'End Series':b.end_series,
+    'Count':b.qty,
+    'Status (Recv/Miss)': b.received==='received'?'Received':b.received==='missing'?'Missing':'',
+    'Dispatch Status': b.status==='dispatched'?'Dispatched':'Available',
+    'Box No':b.box_no||'',
+    'SS Name':b.ss_name||'',
+    'Allotted Station':b.allotted_station_name||'',
+    'State':b.state||'',
+    'Dispatch Date':b.dispatch_date||'',
+    'Dispatch Qty':b.total_dispatch_quantity==null?'':b.total_dispatch_quantity,
+    'Last Updated':b.updated_at?new Date(b.updated_at).toLocaleString('en-IN'):'',
+    'Last Updated By':b.updated_by_name||'',
+    'Print Batch Range':b.batch_print_start+' - '+b.batch_print_end
+  }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),sheetName);
+  const stamp=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, fileName+'_'+stamp+'.xlsx');
+  toast('Downloaded '+rows.length+' rows','ok');
+}
+document.getElementById('dl-available').onclick=()=>fetchFilterAndDownload('available','Available','QR_Available');
+document.getElementById('dl-missing').onclick=()=>fetchFilterAndDownload('missing','Missing','QR_Missing');
+document.getElementById('dl-all').onclick=()=>fetchFilterAndDownload(null,'All QR Bunches','QR_AllData');
 </script>
 </body>
 </html>
