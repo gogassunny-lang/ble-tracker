@@ -10,9 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f4f6fb; --card:#ffffff; --ink:#10203a; --mut:#6b7a90; --soft:#9aa7ba;
-    --line:#e6ebf3; --line2:#eef2f8;
-    --blue:#2f6bff; --purple:#7c3aed; --green:#16b364; --amber:#f5a524; --rose:#f24e6e;
+    --bg:#f4f6fb;--card:#ffffff;--ink:#10203a;--mut:#6b7a90;--soft:#9aa7ba;
+    --line:#e6ebf3;--line2:#eef2f8;
+    --blue:#2f6bff;--purple:#7c3aed;--green:#16b364;--amber:#f5a524;--rose:#f24e6e;--teal:#0fb6a0;
     --grad-purple:linear-gradient(135deg,#7c3aed,#a855f7);
     --shadow:0 1px 2px rgba(16,32,58,.04),0 8px 24px rgba(16,32,58,.06);
     --shadow-lg:0 12px 40px rgba(16,32,58,.10);
@@ -22,8 +22,8 @@
     radial-gradient(1100px 600px at 100% -10%,rgba(124,58,237,.07),transparent 60%),
     radial-gradient(900px 500px at -5% 0%,rgba(168,85,247,.06),transparent 55%),
     var(--bg);color:var(--ink);min-height:100vh;padding:32px 24px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1200px;margin:0 auto}
-  header{display:flex;align-items:center;gap:16px;margin-bottom:4px;justify-content:space-between}
+  .wrap{max-width:1320px;margin:0 auto}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:4px;justify-content:space-between;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:16px}
   .logo{width:52px;height:52px;border-radius:15px;background:var(--grad-purple);display:grid;place-items:center;font-weight:800;color:#fff;font-size:16px;letter-spacing:.5px;box-shadow:0 10px 24px rgba(124,58,237,.30)}
   h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
@@ -43,33 +43,102 @@
   .gatewrap .spin{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* Access-denied screen */
   .deny{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:60px 40px;text-align:center;box-shadow:var(--shadow-lg);max-width:560px;margin:60px auto 0;position:relative;overflow:hidden}
   .deny::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--grad-purple)}
   .denyicon{width:84px;height:84px;border-radius:50%;background:rgba(124,58,237,.10);color:var(--purple);display:grid;place-items:center;font-size:36px;margin:8px auto 22px}
   .deny h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px}
   .deny p{color:var(--mut);font-size:14px;line-height:1.65;margin-bottom:24px;max-width:430px;margin-left:auto;margin-right:auto}
-  .deny .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
   .btn-back{background:#fff;border:1.5px solid var(--line);color:var(--ink);padding:11px 22px;border-radius:11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
   .btn-back:hover{border-color:var(--purple);color:var(--purple)}
   .deny .note{margin-top:24px;padding:14px 16px;background:rgba(124,58,237,.06);border-radius:12px;font-size:12.5px;color:var(--mut);border-left:3px solid var(--purple);text-align:left}
   .deny .note b{color:var(--ink)}
 
-  /* Active screen */
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:42px;text-align:center;box-shadow:var(--shadow);max-width:680px;margin:32px auto 0;position:relative;overflow:hidden}
-  .panel::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--grad-purple)}
-  .panel .icn{font-size:42px;margin-bottom:8px}
-  .panel h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
-  .panel p{color:var(--mut);font-size:14px;line-height:1.65;margin-bottom:20px}
-  .panel .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
-  .opt{background:#fafbfe;border:1.5px dashed var(--line);border-radius:14px;padding:24px 18px;text-align:left;cursor:not-allowed;opacity:.7}
-  .opt h4{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--ink)}
-  .opt p{font-size:12px;color:var(--mut);line-height:1.55;margin:0}
-  .opt .badge{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:30px;background:rgba(245,165,36,.18);color:#c47e0a;margin-top:10px}
-  @media (max-width:560px){.panel .opts{grid-template-columns:1fr}}
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:16px;margin:24px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+  .stat .ribbon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+  .stat .n{font-size:25px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .stat .l{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-weight:600}
+  .r-purple{background:rgba(124,58,237,.10);color:var(--purple)}
+  .r-blue{background:rgba(47,107,255,.10);color:var(--blue)}
+  .r-amber{background:rgba(245,165,36,.14);color:#c47e0a}
+  .r-green{background:rgba(22,179,100,.12);color:var(--green)}
 
-  .siteft{margin-top:48px;padding:14px 4px;color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line2)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:2}
+  .tab{padding:11px 22px;border-radius:12px 12px 0 0;background:transparent;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13.5px;color:var(--mut);font-weight:600;transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{background:var(--card);color:var(--purple);border-color:var(--line);box-shadow:0 -4px 14px rgba(16,32,58,.04)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:0 16px 16px 16px;overflow:hidden;box-shadow:var(--shadow)}
+  .card-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+  .card-head strong{font-size:13.5px;font-weight:700}
+  .head-actions{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--line);color:var(--ink);padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{border-color:var(--purple);color:var(--purple)}
+  .btn-primary{background:var(--grad-purple);color:#fff;border:none;padding:11px 20px;font-weight:700;box-shadow:0 8px 20px rgba(124,58,237,.28)}
+  .btn-primary:hover{transform:translateY(-1px);color:#fff;border:none}
+  .btn-sm{padding:6px 10px;font-size:11.5px}
+  .btn-danger{color:var(--rose);border-color:rgba(242,78,110,.30)}
+  .btn-danger:hover{background:var(--rose);color:#fff;border-color:var(--rose)}
+
+  .tbl-scroll{max-height:620px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:#fafbfe;text-align:left;padding:12px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:700;border-bottom:1.5px solid var(--line);z-index:3;white-space:nowrap}
+  td{padding:8px 14px;border-bottom:1px solid var(--line2);vertical-align:middle}
+  tbody tr{transition:.1s}
+  tbody tr:hover td{background:#faf8ff}
+  tbody tr:last-child td{border-bottom:none}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .mono{font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--mut)}
+  .ser{font-family:"Spline Sans Mono",monospace;font-size:12.5px;font-weight:600;color:var(--purple)}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.4px;display:inline-block}
+  .chip.av{background:rgba(245,165,36,.16);color:#c47e0a}
+  .chip.dp{background:rgba(22,179,100,.12);color:var(--green)}
+  .empty{padding:60px;text-align:center;color:var(--soft);font-size:13.5px}
+
+  td input,td select{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fff;transition:.12s}
+  td input:focus,td select:focus{outline:none;border-color:var(--purple);background:#fff}
+  td input[type=date]{font-family:"Spline Sans Mono",monospace}
+  td input[type=number]{text-align:right}
+  td.locked input,td.locked select{background:#f4f7fc;color:var(--mut);cursor:not-allowed}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(16,32,58,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);width:100%;max-width:560px;max-height:90vh;overflow:auto}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .modal-head h3{font-size:17px;font-weight:700}
+  .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--mut);font-family:inherit;line-height:1}
+  .modal-body{padding:22px 24px}
+  .modal-foot{padding:14px 24px;border-top:1px solid var(--line2);display:flex;gap:10px;justify-content:flex-end;background:#fafbfe}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+  .field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13.5px;font-family:inherit;color:var(--ink);transition:.15s}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--purple)}
+  .twin{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .msg{padding:10px 13px;border-radius:9px;font-size:12.5px;margin-bottom:12px;display:none}
+  .msg.err{display:block;background:rgba(242,78,110,.10);color:var(--rose);border:1px solid rgba(242,78,110,.20)}
+  .msg.ok{display:block;background:rgba(22,179,100,.10);color:var(--green);border:1px solid rgba(22,179,100,.20)}
+  .msg.info{display:block;background:rgba(124,58,237,.08);color:var(--purple);border:1px solid rgba(124,58,237,.20)}
+  .preview-box{background:#fafbfe;border:1px dashed var(--line);border-radius:10px;padding:14px;margin-top:6px;font-size:12.5px;color:var(--mut);line-height:1.7;max-height:180px;overflow:auto;font-family:"Spline Sans Mono",monospace}
+  .preview-box b{color:var(--ink);font-weight:700}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);transition:.3s;z-index:200;opacity:0}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.err{background:var(--rose)}
+  .toast.ok{background:var(--green)}
+
+  .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .filter-bar select{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;font-family:inherit;background:#fff}
+  .filter-bar .lbl{font-size:11.5px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+  .siteft{margin-top:32px;padding:14px 4px;color:var(--soft);font-size:11.5px;text-align:center;border-top:1px solid var(--line2)}
   .siteft b{color:var(--mut);font-weight:600}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#d4dce8;border-radius:8px;border:2px solid var(--card)}
+  ::-webkit-scrollbar-thumb:hover{background:#b9c5d6}
+
+  .placeholder-box{background:var(--card);border:1.5px dashed var(--line);border-radius:16px;padding:60px;text-align:center;color:var(--soft);font-size:13.5px;line-height:1.7}
+  .placeholder-box b{color:var(--mut)}
 </style>
 </head>
 <body class="gate">
@@ -90,34 +159,46 @@
     </div>
   </header>
 
-  <!-- ACCESS DENIED -->
   <div class="deny" id="denyView" style="display:none">
     <div class="denyicon">&#128274;</div>
     <h2>Access Restricted</h2>
     <p>This module is currently restricted. Please <b>contact the admin</b> to request access to the QR Management System.</p>
-    <div class="ctas">
-      <a class="btn-back" href="./index.html">&larr; Back to Platform</a>
-    </div>
-    <div class="note">
-      <b>Note for admin:</b> Open the Admin panel &rarr; edit the user &rarr; toggle <b>"QR Management Access"</b> to ON.
-    </div>
+    <a class="btn-back" href="./index.html">&larr; Back to Platform</a>
+    <div class="note"><b>Note for admin:</b> Open the Admin panel &rarr; edit the user &rarr; toggle <b>"QR Management Access"</b> ON.</div>
   </div>
 
-  <!-- ACTIVE (placeholder for module under construction) -->
-  <div class="panel" id="activeView" style="display:none">
-    <div class="icn">&#128241;</div>
-    <h2>QR Management &mdash; Module under construction</h2>
-    <p>The full module is being built. You will be able to prepare QR shipment data and view a complete dashboard of all QRs sent across the network with filters.</p>
-    <div class="opts">
-      <div class="opt">
-        <h4>&#128221; Prepare QR Data</h4>
-        <p>Enter new QR shipment details in a standard format and save them to the system.</p>
-        <span class="badge">COMING SOON</span>
+  <div id="mainView" style="display:none">
+    <div id="stats" class="stat-row"></div>
+    <div class="tabs">
+      <div class="tab active" data-t="prepare">&#128221; Prepare QR Data</div>
+      <div class="tab" data-t="dashboard">&#128202; Dashboard View</div>
+    </div>
+
+    <div id="prepareTab">
+      <div class="card">
+        <div class="card-head">
+          <strong id="prepTitle">Available bunches (pending dispatch)</strong>
+          <div class="head-actions">
+            <div class="filter-bar">
+              <span class="lbl">Status</span>
+              <select id="statusFilter">
+                <option value="all">All</option>
+                <option value="available" selected>Available</option>
+                <option value="dispatched">Dispatched</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="newBatchBtn">+ New Print Batch</button>
+          </div>
+        </div>
+        <div class="tbl-scroll"><div id="bunchHost"></div></div>
       </div>
-      <div class="opt">
-        <h4>&#128202; Dashboard View</h4>
-        <p>See every QR shipment ever sent, with filters by date, state, location, and more.</p>
-        <span class="badge">COMING SOON</span>
+    </div>
+
+    <div id="dashboardTab" style="display:none">
+      <div class="placeholder-box">
+        <div style="font-size:36px;margin-bottom:14px">&#128202;</div>
+        <b>Dashboard View &mdash; coming in Phase 2</b><br><br>
+        Once you've used the Prepare QR Data tab to enter and dispatch a few bunches, the Dashboard View will give you filters by State, Date, Station, Box, and SS Name with full rollups.
       </div>
     </div>
   </div>
@@ -125,32 +206,228 @@
   <div class="siteft">Developed by <b>Sunny Gupta</b> &middot; QR Management System &copy; <span id="yr"></span></div>
 </div>
 
+<div class="modal-bg" id="batch-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>New Print Batch</h3><button class="modal-close" data-close="batch-modal">×</button></div>
+    <div class="modal-body">
+      <div class="msg" id="batch-msg"></div>
+      <div class="field">
+        <label>Master Print Range</label>
+        <div class="twin">
+          <input id="b-start" type="number" min="1" placeholder="Start (e.g. 1)">
+          <input id="b-end" type="number" min="1" placeholder="End (e.g. 1000)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Bunch Size</label>
+        <input id="b-size" type="number" min="1" placeholder="e.g. 100">
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input id="b-notes" type="text" placeholder="Any reference for this print job">
+      </div>
+      <div class="msg info" style="display:block">After saving, every bunch row appears empty in the table. Fill the dispatch fields whenever each box is sent.</div>
+      <div id="b-preview" class="preview-box" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="batch-modal">Cancel</button>
+      <button class="btn" id="b-preview-btn">Preview split</button>
+      <button class="btn btn-primary" id="b-create">Create Batch</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
 if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
   document.body.innerHTML='<div style="padding:40px;font-family:sans-serif"><h2>Configuration missing</h2></div>';
   throw new Error('Missing Supabase config');
 }
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const STATES=['TN','RAJ','AP/TL','MP','MH','WB','KAR'];
+let CURRENT_USER=null,CURRENT_PROFILE=null,IS_ADMIN=false;
+const S={bunches:[],stats:null,filterStatus:'available'};
+
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'')+' show';setTimeout(()=>t.classList.remove('show'),3000);}
+function escapeHTML(s){return String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function fmtN(n){return (n==null||isNaN(n))?'':Number(n).toLocaleString('en-IN');}
+function fmtDateTime(d){if(!d)return '—';const x=new Date(d);return x.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 
 (async function gate(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='./login.html';return;}
-  const user=session.user;
-  const {data:profile,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  CURRENT_USER=session.user;
+  const {data:profile,error}=await sb.from('profiles').select('*').eq('id',CURRENT_USER.id).single();
   if(error||!profile){await sb.auth.signOut();window.location.href='./login.html';return;}
+  CURRENT_PROFILE=profile;
+  IS_ADMIN=profile.role==='admin';
   document.getElementById('uname').textContent=profile.full_name||profile.email.split('@')[0];
   document.getElementById('urole').textContent=profile.role;
   document.getElementById('uavatar').textContent=(profile.full_name||profile.email).trim().charAt(0).toUpperCase();
   document.getElementById('userbox').style.display='flex';
-  const isAdmin=profile.role==='admin';
-  const perms=profile.permissions||{};
-  const hasQR=isAdmin||perms.qr_management===true;
+  const hasQR=IS_ADMIN||(profile.permissions&&profile.permissions.qr_management===true);
   document.body.classList.remove('gate');document.getElementById('gate').style.display='none';
-  document.getElementById(hasQR?'activeView':'denyView').style.display='block';
+  if(!hasQR){document.getElementById('denyView').style.display='block';return;}
+  document.getElementById('mainView').style.display='block';
+  await loadAll();
 })();
+
 document.getElementById('logoutbtn').onclick=async()=>{await sb.auth.signOut();window.location.href='./login.html';};
 sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='./login.html';});
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const which=t.dataset.t;
+  document.getElementById('prepareTab').style.display=which==='prepare'?'block':'none';
+  document.getElementById('dashboardTab').style.display=which==='dashboard'?'block':'none';
+});
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open');});
+
+async function loadStats(){
+  const {data,error}=await sb.rpc('qr_stats');
+  if(error){console.warn(error.message);return;}
+  S.stats=Array.isArray(data)?data[0]:data;renderStats();
+}
+async function loadBunches(){
+  const status=S.filterStatus==='all'?null:S.filterStatus;
+  const {data,error}=await sb.rpc('qr_list_bunches',{p_status:status});
+  if(error){toast(error.message,'err');return;}
+  S.bunches=data||[];renderBunches();
+}
+async function loadAll(){await Promise.all([loadStats(),loadBunches()]);}
+
+function renderStats(){
+  const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_qty_available:0,total_qty_dispatched:0,total_batches:0};
+  const cards=[
+    ['&#128230;','Print Batches',s.total_batches,'r-purple'],
+    ['&#128220;','Total Bunches',s.total_bunches,'r-blue'],
+    ['&#9203;','Available (Pending)',s.total_available,'r-amber'],
+    ['&#9989;','Dispatched',s.total_dispatched,'r-green'],
+    ['&#128202;','QR Codes Available',fmtN(s.total_qty_available),'r-amber'],
+    ['&#128640;','QR Codes Dispatched',fmtN(s.total_qty_dispatched),'r-green']
+  ];
+  document.getElementById('stats').innerHTML=cards.map(c=>'<div class="stat"><div class="ribbon '+c[3]+'">'+c[0]+'</div><div class="n">'+c[2]+'</div><div class="l">'+c[1]+'</div></div>').join('');
+}
+
+document.getElementById('statusFilter').onchange=async e=>{S.filterStatus=e.target.value;await loadBunches();};
+document.getElementById('newBatchBtn').onclick=()=>{
+  ['b-start','b-end','b-size','b-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('b-preview').style.display='none';
+  document.getElementById('batch-msg').className='msg';
+  openModal('batch-modal');
+};
+
+function stateOpts(sel){return STATES.map(s=>'<option value="'+s+'"'+(sel===s?' selected':'')+'>'+s+'</option>').join('');}
+
+function renderBunches(){
+  const titleMap={available:'Available bunches (pending dispatch)',dispatched:'Dispatched bunches',all:'All bunches'};
+  document.getElementById('prepTitle').textContent=titleMap[S.filterStatus]+' ('+S.bunches.length+')';
+  if(!S.bunches.length){
+    document.getElementById('bunchHost').innerHTML='<div class="empty">No bunches to show. Click <b>+ New Print Batch</b> to start.</div>';
+    return;
+  }
+  const head='<tr>'+
+    '<th>Status</th><th>Series</th><th class="num">Count</th>'+
+    '<th>Box No</th><th>SS Name</th><th>Allotted Station</th>'+
+    '<th>State</th><th>Dispatch Date</th><th class="num">Dispatch Qty</th>'+
+    '<th>Last Updated</th><th></th></tr>';
+  const body=S.bunches.map(b=>{
+    const dispatched=b.status==='dispatched';
+    const lockedForUser=dispatched && !IS_ADMIN;
+    const lockCls=lockedForUser?'locked':'';
+    const chip='<span class="chip '+(dispatched?'dp':'av')+'">'+(dispatched?'Dispatched':'Available')+'</span>';
+    return '<tr data-id="'+b.id+'">'+
+      '<td>'+chip+'</td>'+
+      '<td class="ser">'+b.start_series+' &ndash; '+b.end_series+'</td>'+
+      '<td class="num">'+fmtN(b.qty)+'</td>'+
+      '<td class="'+lockCls+'"><input data-f="box_no" type="text" value="'+escapeHTML(b.box_no)+'" '+(lockedForUser?'disabled':'')+' placeholder="Box #"></td>'+
+      '<td class="'+lockCls+'"><input data-f="ss_name" type="text" value="'+escapeHTML(b.ss_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="SS / Sales staff"></td>'+
+      '<td class="'+lockCls+'"><input data-f="allotted_station_name" type="text" value="'+escapeHTML(b.allotted_station_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="Station"></td>'+
+      '<td class="'+lockCls+'"><select data-f="state" '+(lockedForUser?'disabled':'')+'><option value="">—</option>'+stateOpts(b.state)+'</select></td>'+
+      '<td class="'+lockCls+'"><input data-f="dispatch_date" type="date" value="'+(b.dispatch_date||'')+'" '+(lockedForUser?'disabled':'')+'></td>'+
+      '<td class="'+lockCls+' num"><input data-f="total_dispatch_quantity" type="number" min="0" value="'+(b.total_dispatch_quantity==null?'':b.total_dispatch_quantity)+'" '+(lockedForUser?'disabled':'')+' placeholder="Qty"></td>'+
+      '<td class="mono">'+fmtDateTime(b.updated_at)+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'</td>'+
+      '<td style="white-space:nowrap;text-align:right">'+
+        (lockedForUser?'<span class="chip dp">Locked</span>':
+          '<button class="btn btn-sm" data-act="save">Save</button>'+
+          (dispatched?' <button class="btn btn-sm" data-act="reset">Clear</button>':''))+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById('bunchHost').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+  document.querySelectorAll('button[data-act="save"]').forEach(b=>b.onclick=onSaveRow);
+  document.querySelectorAll('button[data-act="reset"]').forEach(b=>b.onclick=onResetRow);
+}
+
+async function onSaveRow(e){
+  const tr=e.target.closest('tr');const id=tr.dataset.id;
+  const get=k=>tr.querySelector('[data-f="'+k+'"]').value;
+  const payload={
+    p_bunch_id:id,
+    p_box_no:get('box_no'),
+    p_ss_name:get('ss_name'),
+    p_allotted_station_name:get('allotted_station_name'),
+    p_state:get('state'),
+    p_dispatch_date:get('dispatch_date')||null,
+    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity'))
+  };
+  const btn=e.target;btn.disabled=true;const orig=btn.textContent;btn.textContent='Saving…';
+  const {error}=await sb.rpc('qr_update_bunch',payload);
+  if(error){toast(error.message,'err');btn.disabled=false;btn.textContent=orig;return;}
+  toast('Saved','ok');await loadAll();
+}
+async function onResetRow(e){
+  const tr=e.target.closest('tr');const id=tr.dataset.id;
+  if(!confirm('Clear all dispatch fields on this bunch? It will move back to "Available".'))return;
+  const {error}=await sb.rpc('qr_update_bunch',{
+    p_bunch_id:id,p_box_no:'',p_ss_name:'',p_allotted_station_name:'',
+    p_state:'',p_dispatch_date:null,p_total_dispatch_quantity:null});
+  if(error){toast(error.message,'err');return;}
+  toast('Cleared','ok');await loadAll();
+}
+
+function splitPreview(start,end,size){
+  const total=end-start+1;const bunches=Math.ceil(total/size);
+  const arr=[];for(let i=1;i<=bunches;i++){
+    const s=start+(i-1)*size;const e=Math.min(s+size-1,end);arr.push({i,s,e,q:e-s+1});}
+  return {total,bunches,arr};
+}
+document.getElementById('b-preview-btn').onclick=()=>{
+  const start=Number(document.getElementById('b-start').value);
+  const end=Number(document.getElementById('b-end').value);
+  const size=Number(document.getElementById('b-size').value);
+  const msg=document.getElementById('batch-msg');msg.className='msg';
+  if(!start||!end||!size||end<start||size<=0){msg.className='msg err';msg.textContent='Please enter valid Start, End, and Bunch Size.';return;}
+  const sp=splitPreview(start,end,size);
+  if(sp.bunches>5000){msg.className='msg err';msg.textContent='Too many bunches ('+sp.bunches+'). Increase bunch size.';return;}
+  const box=document.getElementById('b-preview');box.style.display='block';
+  let html='<b>Total codes:</b> '+sp.total+' &middot; <b>Bunches:</b> '+sp.bunches+'<br>';
+  const show=sp.arr.slice(0,30);
+  show.forEach(x=>{html+='Bunch '+x.i+': '+x.s+' &ndash; '+x.e+' &nbsp;('+x.q+' codes)<br>';});
+  if(sp.arr.length>30)html+='&hellip; and '+(sp.arr.length-30)+' more';
+  box.innerHTML=html;
+};
+document.getElementById('b-create').onclick=async()=>{
+  const start=Number(document.getElementById('b-start').value);
+  const end=Number(document.getElementById('b-end').value);
+  const size=Number(document.getElementById('b-size').value);
+  const notes=document.getElementById('b-notes').value.trim();
+  const msg=document.getElementById('batch-msg');msg.className='msg';
+  if(!start||!end||!size||end<start||size<=0){msg.className='msg err';msg.textContent='Please enter valid Start, End, and Bunch Size.';return;}
+  const btn=document.getElementById('b-create');btn.disabled=true;btn.textContent='Creating…';
+  const {error}=await sb.rpc('qr_create_batch',{p_print_start:start,p_print_end:end,p_bunch_size:size,p_notes:notes||null});
+  if(error){msg.className='msg err';msg.textContent=error.message;btn.disabled=false;btn.textContent='Create Batch';return;}
+  closeModal('batch-modal');toast('Batch created','ok');S.filterStatus='available';document.getElementById('statusFilter').value='available';
+  await loadAll();btn.disabled=false;btn.textContent='Create Batch';
+};
 </script>
 </body>
 </html>
