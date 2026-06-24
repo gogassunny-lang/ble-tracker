@@ -148,6 +148,37 @@
 
   .placeholder-box{background:var(--card);border:1.5px dashed var(--line);border-radius:16px;padding:60px;text-align:center;color:var(--soft);font-size:13.5px;line-height:1.7}
   .placeholder-box b{color:var(--mut)}
+
+  /* Batches strip */
+  .batches-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .batches-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .batches-head h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--mut)}
+  .batches-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .bchip{display:flex;flex-direction:column;gap:6px;background:#fafbfe;border:1.5px solid var(--line);border-radius:12px;padding:10px 13px;min-width:230px;transition:.15s;position:relative}
+  .bchip.active{border-color:var(--purple);background:rgba(124,58,237,.05);box-shadow:0 4px 14px rgba(124,58,237,.10)}
+  .bchip:hover:not(.active){border-color:#cdd6e6}
+  .bchip .brange{font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:13px;color:var(--purple)}
+  .bchip .bmeta{font-size:10.5px;color:var(--mut);font-weight:600;line-height:1.55}
+  .bchip .bmeta b{color:var(--ink);font-weight:700}
+  .bchip .bactions{display:flex;gap:5px;margin-top:4px}
+  .bchip .ba-btn{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--line);cursor:pointer;background:#fff;font-family:inherit;transition:.12s;color:var(--mut)}
+  .bchip .ba-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
+  .bchip .ba-btn.view{flex:1}
+  .bchip .ba-btn.view.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .bchip .ba-btn.del{color:var(--rose);border-color:rgba(242,78,110,.30)}
+  .bchip .ba-btn.del:hover:not(:disabled){background:var(--rose);color:#fff;border-color:var(--rose)}
+  .bchip .ba-btn:disabled{opacity:.4;cursor:not-allowed}
+  .bchip .own-pill{position:absolute;top:6px;right:8px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;letter-spacing:.5px;background:rgba(15,182,160,.15);color:var(--teal)}
+  .bchip .stats-row{display:flex;gap:10px;font-size:10.5px;color:var(--mut);font-weight:600}
+  .bchip .stats-row span b{color:var(--ink)}
+  .bchip .stats-row .g{color:var(--green)} .bchip .stats-row .a{color:#c47e0a} .bchip .stats-row .m{color:var(--rose)}
+  .bnone{font-size:13px;color:var(--soft);padding:8px 4px}
+
+  /* Active batch banner above the table */
+  .batch-filter-banner{display:flex;align-items:center;gap:10px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:10px;padding:9px 14px;font-size:12.5px;color:var(--purple);margin-bottom:0}
+  .batch-filter-banner b{color:var(--purple)}
+  .batch-filter-banner .clearx{margin-left:auto;cursor:pointer;background:none;border:none;font-size:14px;color:var(--purple);font-family:inherit;padding:2px 6px;border-radius:6px}
+  .batch-filter-banner .clearx:hover{background:rgba(124,58,237,.12)}
 </style>
 </head>
 <body class="gate">
@@ -184,6 +215,14 @@
     </div>
 
     <div id="prepareTab">
+      <div class="batches-card" id="batchesCard">
+        <div class="batches-head"><h4>Print Batches</h4></div>
+        <div class="batches-grid" id="batchesGrid"></div>
+      </div>
+      <div class="batch-filter-banner" id="batchBanner" style="display:none">
+        Showing only batch: <b id="batchBannerLabel">—</b>
+        <button class="clearx" id="clearBatchFilter">Clear &times;</button>
+      </div>
       <div class="card">
         <div class="card-head">
           <strong id="prepTitle">Available bunches (pending dispatch)</strong>
@@ -217,6 +256,36 @@
   </div>
 
   <div class="siteft">Developed by <b>Sunny Gupta</b> &middot; QR Management System &copy; <span id="yr"></span></div>
+</div>
+
+<!-- EDIT BATCH MODAL -->
+<div class="modal-bg" id="edit-batch-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Edit Batch</h3><button class="modal-close" data-close="edit-batch-modal">×</button></div>
+    <div class="modal-body">
+      <div class="msg" id="ebatch-msg"></div>
+      <div class="msg info" style="display:block">Editing batch metadata. The individual bunches that were already generated remain unchanged.</div>
+      <div class="field">
+        <label>Master Print Range</label>
+        <div class="twin">
+          <input id="eb-start" type="number" min="1">
+          <input id="eb-end" type="number" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Bunch Size</label>
+        <input id="eb-size" type="number" min="1">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input id="eb-notes" type="text">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="edit-batch-modal">Cancel</button>
+      <button class="btn btn-primary" id="eb-save">Save Changes</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-bg" id="batch-modal">
@@ -260,7 +329,7 @@ if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const STATES=['TN','RAJ','AP/TL','MP','MH','WB','KAR'];
 let CURRENT_USER=null,CURRENT_PROFILE=null,IS_ADMIN=false;
-const S={bunches:[],stats:null,filterStatus:'available'};
+const S={bunches:[],batches:[],stats:null,filterStatus:'available',filterBatchId:null,editingBatchId:null};
 
 document.getElementById('yr').textContent=new Date().getFullYear();
 
@@ -313,9 +382,102 @@ async function loadBunches(){
   const status=S.filterStatus==='all'?null:S.filterStatus;
   const {data,error}=await sb.rpc('qr_list_bunches',{p_filter:status});
   if(error){toast(error.message,'err');return;}
-  S.bunches=data||[];renderBunches();
+  let rows=data||[];
+  if(S.filterBatchId){rows=rows.filter(r=>r.batch_id===S.filterBatchId);}
+  S.bunches=rows;renderBunches();
 }
-async function loadAll(){await Promise.all([loadStats(),loadBunches()]);}
+async function loadBatches(){
+  const {data,error}=await sb.rpc('qr_list_batches');
+  if(error){console.warn(error.message);return;}
+  S.batches=data||[];renderBatches();
+}
+async function loadAll(){await Promise.all([loadStats(),loadBatches(),loadBunches()]);}
+
+function renderBatches(){
+  const grid=document.getElementById('batchesGrid');
+  if(!S.batches.length){
+    grid.innerHTML='<div class="bnone">No batches yet. Click <b>+ New Print Batch</b> to start.</div>';
+    return;
+  }
+  grid.innerHTML=S.batches.map(b=>{
+    const active=S.filterBatchId===b.id;
+    const ownPill=b.is_mine?'<span class="own-pill">YOURS</span>':'';
+    const modifyDisabled=!b.can_modify;
+    const tip=modifyDisabled?'title="Locked \u2014 some bunches in this batch are already dispatched. Admin only."':'';
+    return '<div class="bchip '+(active?'active':'')+'" data-bid="'+b.id+'">'+
+      ownPill+
+      '<div class="brange">'+b.print_start+' &ndash; '+b.print_end+'</div>'+
+      '<div class="bmeta">Size <b>'+b.bunch_size+'</b> &middot; <b>'+b.total_bunches+'</b> bunches &middot; by <b>'+(b.created_by_name||'\u2014')+'</b></div>'+
+      '<div class="stats-row">'+
+        '<span class="a">Avail <b>'+b.total_available+'</b></span>'+
+        '<span class="g">Disp <b>'+b.total_dispatched+'</b></span>'+
+        '<span class="m">Miss <b>'+b.total_missing+'</b></span>'+
+      '</div>'+
+      '<div class="bactions">'+
+        '<button class="ba-btn view '+(active?'on':'')+'" data-act="view-batch">'+(active?'\u2713 Viewing':'View')+'</button>'+
+        '<button class="ba-btn" data-act="edit-batch" '+(modifyDisabled?'disabled '+tip:'')+'>Edit</button>'+
+        '<button class="ba-btn del" data-act="delete-batch" '+(modifyDisabled?'disabled '+tip:'')+'>Delete</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  /* wire up actions */
+  grid.querySelectorAll('[data-act="view-batch"]').forEach(b=>b.onclick=e=>{
+    const bid=e.target.closest('.bchip').dataset.bid;
+    S.filterBatchId=S.filterBatchId===bid?null:bid;
+    updateBatchBanner();loadBunches();renderBatches();
+  });
+  grid.querySelectorAll('[data-act="edit-batch"]').forEach(b=>b.onclick=e=>{
+    if(b.disabled)return;
+    openEditBatch(e.target.closest('.bchip').dataset.bid);
+  });
+  grid.querySelectorAll('[data-act="delete-batch"]').forEach(b=>b.onclick=e=>{
+    if(b.disabled)return;
+    onDeleteBatch(e.target.closest('.bchip').dataset.bid);
+  });
+}
+function updateBatchBanner(){
+  const banner=document.getElementById('batchBanner');
+  if(!S.filterBatchId){banner.style.display='none';return;}
+  const b=S.batches.find(x=>x.id===S.filterBatchId);
+  if(!b){banner.style.display='none';return;}
+  document.getElementById('batchBannerLabel').textContent=b.print_start+' \u2013 '+b.print_end+' (Size '+b.bunch_size+', by '+(b.created_by_name||'\u2014')+')';
+  banner.style.display='flex';
+}
+document.getElementById('clearBatchFilter').onclick=()=>{
+  S.filterBatchId=null;updateBatchBanner();loadBunches();renderBatches();
+};
+async function openEditBatch(bid){
+  S.editingBatchId=bid;
+  const b=S.batches.find(x=>x.id===bid);if(!b)return;
+  document.getElementById('eb-start').value=b.print_start;
+  document.getElementById('eb-end').value=b.print_end;
+  document.getElementById('eb-size').value=b.bunch_size;
+  document.getElementById('eb-notes').value=b.notes||'';
+  document.getElementById('ebatch-msg').className='msg';
+  openModal('edit-batch-modal');
+}
+document.getElementById('eb-save').onclick=async()=>{
+  const msg=document.getElementById('ebatch-msg');msg.className='msg';
+  const start=Number(document.getElementById('eb-start').value);
+  const end=Number(document.getElementById('eb-end').value);
+  const size=Number(document.getElementById('eb-size').value);
+  const notes=document.getElementById('eb-notes').value.trim();
+  if(!start||!end||!size||end<start||size<=0){msg.className='msg err';msg.textContent='Please enter valid Start, End, Bunch Size.';return;}
+  const btn=document.getElementById('eb-save');btn.disabled=true;btn.textContent='Saving…';
+  const {error}=await sb.rpc('qr_edit_batch',{p_batch_id:S.editingBatchId,p_print_start:start,p_print_end:end,p_bunch_size:size,p_notes:notes||null});
+  if(error){msg.className='msg err';msg.textContent=error.message;btn.disabled=false;btn.textContent='Save Changes';return;}
+  closeModal('edit-batch-modal');toast('Batch updated','ok');await loadAll();
+  btn.disabled=false;btn.textContent='Save Changes';
+};
+async function onDeleteBatch(bid){
+  const b=S.batches.find(x=>x.id===bid);if(!b)return;
+  if(!confirm('Delete this batch ('+b.print_start+'–'+b.print_end+', '+b.total_bunches+' bunches)?\n\nThis removes the batch and ALL its bunches permanently. Cannot be undone.'))return;
+  const {error}=await sb.rpc('qr_delete_batch',{p_batch_id:bid});
+  if(error){toast(error.message,'err');return;}
+  toast('Batch deleted','ok');
+  if(S.filterBatchId===bid)S.filterBatchId=null;
+  await loadAll();
+}
 
 function renderStats(){
   const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_missing:0,total_received:0,total_qty_available:0,total_qty_dispatched:0,total_qty_missing:0,total_batches:0};
