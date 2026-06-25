@@ -259,6 +259,7 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
   @keyframes savedFlash{0%{background:rgba(22,179,100,.18)}100%{background:transparent}}
   tr.save-error td:not(.cb-cell){animation:errorFlash 1.2s ease-out}
   @keyframes errorFlash{0%{background:rgba(242,78,110,.18)}100%{background:transparent}}
+  tr.missing-office td:nth-child(7){box-shadow:inset 3px 0 0 var(--rose)}
   .row-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;background:transparent;transition:.2s}
   .row-status-dot.saving{background:var(--amber);animation:pulse 1s ease-in-out infinite}
   .row-status-dot.ok{background:var(--green)}
@@ -402,12 +403,19 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
         </div>
         <div class="bulkbar" id="bulkbar">
           <span class="bb-count"><span id="bb-n">0</span> selected</span>
-          <span class="bb-lbl">Box</span><input id="bb-box" type="text" placeholder="Box #">
-          <span class="bb-lbl">SS</span><input id="bb-ss" type="text" placeholder="SS Name">
-          <span class="bb-lbl">Station</span><input id="bb-station" type="text" placeholder="Station">
+          <span class="bb-lbl">Start</span>
+          <select id="bb-start-range" style="width:100px"><option value="">—</option></select>
+          <span class="bb-lbl">End</span>
+          <select id="bb-end-range" style="width:100px"><option value="">—</option></select>
+          <button class="bb-clear" id="bb-pick-range" style="color:var(--purple);background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.30);padding:6px 12px;border-radius:7px">Tick range</button>
+          <span style="border-left:1.5px solid rgba(124,58,237,.25);height:24px;margin:0 4px"></span>
+          <span class="bb-lbl">Box</span><input id="bb-box" type="text" placeholder="Box #" style="width:80px">
+          <span class="bb-lbl">Office</span><input id="bb-office" type="text" placeholder="Office person" style="width:110px">
+          <span class="bb-lbl">SS</span><input id="bb-ss" type="text" placeholder="SS Name" style="width:100px">
+          <span class="bb-lbl">Station</span><input id="bb-station" type="text" placeholder="Station" style="width:110px">
           <span class="bb-lbl">State</span>
-          <select id="bb-state"><option value="">—</option></select>
-          <span class="bb-lbl">Qty</span><input id="bb-qty" type="number" min="0" placeholder="Qty" style="width:80px">
+          <select id="bb-state" style="width:85px"><option value="">—</option></select>
+          <span class="bb-lbl">Qty</span><input id="bb-qty" type="number" min="0" placeholder="Qty" style="width:75px">
           <button class="bb-apply" id="bb-apply">Apply to selected</button>
           <button class="bb-clear" id="bb-clear">Clear selection</button>
         </div>
@@ -741,7 +749,7 @@ function renderBunches(){
     '<th class="cb-cell"><input type="checkbox" id="cb-all"'+(allChecked?' checked':'')+'></th>'+
     '<th title="Click to mark received (\u2713) / missing (\u2717) / unmarked">Status</th>'+
     '<th>Start Series</th><th>End Series</th><th class="num">Count</th>'+
-    '<th>Box No</th><th>SS Name</th><th>Allotted Station</th>'+
+    '<th>Box No</th><th>Office Person</th><th>SS Name</th><th>Allotted Station</th>'+
     '<th>State</th><th>Dispatch Date</th><th class="num">Dispatch Qty</th>'+
     '<th>Last Updated</th><th></th></tr>';
   const body=rows.map(b=>{
@@ -749,24 +757,27 @@ function renderBunches(){
     const lockedForUser=dispatched && !IS_ADMIN;
     const lockCls=lockedForUser?'locked':'';
     const isChecked=S.selected.has(b.id);
+    /* Warning when dispatched but missing office_person */
+    const needsOffice = dispatched && !b.office_person;
     /* status cell content */
     let stCls='stcell',stTxt='';
     if(b.received==='received'){stCls+=' recv';stTxt='\u2713';}
     else if(b.received==='missing'){stCls+=' miss';stTxt='\u2717';}
     const statusCell='<span class="'+stCls+'" data-act="toggle-status" title="Click to cycle: \u2713 received / \u2717 missing / unmarked">'+stTxt+'</span>';
-    return '<tr data-id="'+b.id+'">'+
+    return '<tr data-id="'+b.id+'"'+(needsOffice?' class="missing-office"':'')+'>'+
       '<td class="cb-cell">'+(lockedForUser?'':'<input type="checkbox" data-act="select-row"'+(isChecked?' checked':'')+'>')+'</td>'+
       '<td>'+statusCell+'</td>'+
       '<td class="ser">'+b.start_series+'</td>'+
       '<td class="ser">'+b.end_series+'</td>'+
       '<td class="num">'+fmtN(b.qty)+'</td>'+
       '<td class="'+lockCls+'"><input data-f="box_no" data-auto="1" type="text" value="'+escapeHTML(b.box_no)+'" '+(lockedForUser?'disabled':'')+' placeholder="Box #"></td>'+
+      '<td class="'+lockCls+'"><input data-f="office_person" data-auto="1" type="text" value="'+escapeHTML(b.office_person)+'" '+(lockedForUser?'disabled':'')+' placeholder="Office person"'+(needsOffice?' style="border-color:var(--rose);background:rgba(242,78,110,.06)" title="Required for dispatched rows"':'')+'></td>'+
       '<td class="'+lockCls+'"><input data-f="ss_name" data-auto="1" type="text" value="'+escapeHTML(b.ss_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="SS / Sales staff"></td>'+
       '<td class="'+lockCls+'"><input data-f="allotted_station_name" data-auto="1" type="text" value="'+escapeHTML(b.allotted_station_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="Station"></td>'+
       '<td class="'+lockCls+'"><select data-f="state" data-auto="1" '+(lockedForUser?'disabled':'')+'><option value="">—</option>'+stateOpts(b.state)+'</select></td>'+
       '<td class="'+lockCls+'"><input data-f="dispatch_date" type="date" value="'+(b.dispatch_date||'')+'" '+(lockedForUser?'disabled':'')+'></td>'+
       '<td class="'+lockCls+' num"><input data-f="total_dispatch_quantity" data-auto="1" type="number" min="0" value="'+(b.total_dispatch_quantity==null?'':b.total_dispatch_quantity)+'" '+(lockedForUser?'disabled':'')+' placeholder="Qty"></td>'+
-      '<td class="mono">'+(b.updated_at?fmtDateTime(b.updated_at):'—')+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'<span class="row-status-dot" data-role="rsd"></span></td>'+
+      '<td class="mono">'+(b.updated_at?fmtDateTime(b.updated_at):'—')+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'<span class="row-status-dot" data-role="rsd"></span>'+(needsOffice?'<br><span style="font-size:10.5px;color:var(--rose);font-weight:700">\u26a0 Office Person missing</span>':'')+'</td>'+
       '<td style="white-space:nowrap;text-align:right">'+
         (lockedForUser?'<span class="chip dp">Locked</span>':
           '<button class="btn btn-sm" data-act="save" title="Save Date (and all changes)">Save Date</button>'+
@@ -814,7 +825,8 @@ async function onAutoSave(e){
     p_allotted_station_name:get('allotted_station_name'),
     p_state:get('state'),
     p_dispatch_date:get('dispatch_date')||null,
-    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity'))
+    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity')),
+    p_office_person:get('office_person')
   };
   const dot=tr.querySelector('[data-role="rsd"]');if(dot){dot.className='row-status-dot saving';}
   const {error}=await sb.rpc('qr_update_bunch',payload);
@@ -849,7 +861,8 @@ async function onSaveRow(e){
     p_allotted_station_name:get('allotted_station_name'),
     p_state:get('state'),
     p_dispatch_date:get('dispatch_date')||null,
-    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity'))
+    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity')),
+    p_office_person:get('office_person')
   };
   const btn=e.target;btn.disabled=true;const orig=btn.textContent;btn.textContent='Saving…';
   const {error}=await sb.rpc('qr_update_bunch',payload);
@@ -861,7 +874,7 @@ async function onResetRow(e){
   if(!confirm('Clear all dispatch fields on this bunch? It will move back to "Available".'))return;
   const {error}=await sb.rpc('qr_update_bunch',{
     p_bunch_id:id,p_box_no:'',p_ss_name:'',p_allotted_station_name:'',
-    p_state:'',p_dispatch_date:null,p_total_dispatch_quantity:null});
+    p_state:'',p_dispatch_date:null,p_total_dispatch_quantity:null,p_office_person:''});
   if(error){toast(error.message,'err');return;}
   toast('Cleared','ok');await loadAll();
 }
@@ -881,18 +894,48 @@ function syncBulkBar(){
   /* Populate state dropdown once */
   const stSel=document.getElementById('bb-state');
   if(stSel.options.length<=1){STATES.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;stSel.appendChild(o);});}
+  /* Populate Start / End range dropdowns from visible bunches */
+  const startSel=document.getElementById('bb-start-range');
+  const endSel=document.getElementById('bb-end-range');
+  const visible=visibleBunches();
+  const starts=Array.from(new Set(visible.map(b=>b.start_series))).sort((a,b)=>a-b);
+  const ends=Array.from(new Set(visible.map(b=>b.end_series))).sort((a,b)=>a-b);
+  const curStart=startSel.value,curEnd=endSel.value;
+  startSel.innerHTML='<option value="">—</option>'+starts.map(s=>'<option value="'+s+'"'+(String(s)===curStart?' selected':'')+'>'+s+'</option>').join('');
+  endSel.innerHTML='<option value="">—</option>'+ends.map(s=>'<option value="'+s+'"'+(String(s)===curEnd?' selected':'')+'>'+s+'</option>').join('');
 }
 document.getElementById('bb-clear').onclick=()=>{S.selected.clear();renderBunches();};
+
+/* Range pickers: when user clicks "Tick range", tick all bunches whose
+   start_series >= chosen start AND end_series <= chosen end. */
+document.getElementById('bb-pick-range').onclick=()=>{
+  const s=Number(document.getElementById('bb-start-range').value);
+  const e=Number(document.getElementById('bb-end-range').value);
+  if(!s||!e){toast('Pick Start and End range first','err');return;}
+  if(e<s){toast('End must be >= Start','err');return;}
+  const visible=visibleBunches();
+  let added=0;
+  visible.forEach(b=>{
+    if(b.start_series>=s && b.end_series<=e){
+      if(!S.selected.has(b.id)){S.selected.add(b.id);added++;}
+    }
+  });
+  if(!added && S.selected.size===0){toast('No bunches in that range','err');return;}
+  toast('Selected '+S.selected.size+' bunch(es) in range '+s+'\u2013'+e,'ok');
+  renderBunches();
+};
+
 document.getElementById('bb-apply').onclick=async()=>{
   if(!S.selected.size){toast('No rows selected','err');return;}
   const fill={
     box_no:document.getElementById('bb-box').value.trim(),
+    office_person:document.getElementById('bb-office').value.trim(),
     ss_name:document.getElementById('bb-ss').value.trim(),
     allotted_station_name:document.getElementById('bb-station').value.trim(),
     state:document.getElementById('bb-state').value,
     total_dispatch_quantity:document.getElementById('bb-qty').value
   };
-  const hasAny=fill.box_no||fill.ss_name||fill.allotted_station_name||fill.state||fill.total_dispatch_quantity!=='';
+  const hasAny=fill.box_no||fill.office_person||fill.ss_name||fill.allotted_station_name||fill.state||fill.total_dispatch_quantity!=='';
   if(!hasAny){toast('Enter at least one field to apply','err');return;}
   if(!confirm('Apply these values to '+S.selected.size+' selected bunch(es)?\n\nOnly EMPTY fields will be filled \u2014 existing values won\u2019t be overwritten.'))return;
 
@@ -910,15 +953,18 @@ document.getElementById('bb-apply').onclick=async()=>{
       p_state:cur.state||fill.state||'',
       p_dispatch_date:cur.dispatch_date||null,
       p_total_dispatch_quantity:(cur.total_dispatch_quantity!=null && cur.total_dispatch_quantity!=='')?cur.total_dispatch_quantity
-                                : (fill.total_dispatch_quantity===''?null:Number(fill.total_dispatch_quantity))
+                                : (fill.total_dispatch_quantity===''?null:Number(fill.total_dispatch_quantity)),
+      p_office_person:cur.office_person||fill.office_person||''
     };
     const {error}=await sb.rpc('qr_update_bunch',payload);
     if(error)fail++; else ok++;
   }
   btn.disabled=false;btn.textContent='Apply to selected';
   /* Clear the bulk form */
-  ['bb-box','bb-ss','bb-station','bb-qty'].forEach(id=>document.getElementById(id).value='');
+  ['bb-box','bb-office','bb-ss','bb-station','bb-qty'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bb-state').value='';
+  document.getElementById('bb-start-range').value='';
+  document.getElementById('bb-end-range').value='';
   S.selected.clear();
   toast(ok+' updated'+(fail?', '+fail+' failed':''),fail?'err':'ok');
   await loadAll();
@@ -1160,7 +1206,7 @@ function renderDetailTable(rows){
     return;
   }
   const head='<tr>'+
-    '<th>Status</th><th>State</th><th>Allotted Station</th><th>SS Name</th><th>Box</th>'+
+    '<th>Status</th><th>State</th><th>Allotted Station</th><th>SS Name</th><th>Office Person</th><th>Box</th>'+
     '<th>Start</th><th>End</th><th class="num">Qty</th><th>Dispatch Date</th><th>Updated</th></tr>';
   const body=rows.map(r=>{
     let chip='';
@@ -1172,6 +1218,7 @@ function renderDetailTable(rows){
       '<td>'+escapeHTML(r.state||'\u2014')+'</td>'+
       '<td>'+escapeHTML(r.allotted_station_name||'\u2014')+'</td>'+
       '<td>'+escapeHTML(r.ss_name||'\u2014')+'</td>'+
+      '<td>'+escapeHTML(r.office_person||'\u2014')+'</td>'+
       '<td>'+escapeHTML(r.box_no||'\u2014')+'</td>'+
       '<td class="ser">'+r.start_series+'</td>'+
       '<td class="ser">'+r.end_series+'</td>'+
@@ -1244,6 +1291,7 @@ document.getElementById('dash-dl-excel').onclick=()=>{
     'Allotted Station':r.allotted_station_name||'',
     'Master ERP':resolveErpForRow(r)||'',
     'Master Station Name':(resolveErpForRow(r)&&MASTER[resolveErpForRow(r)])?MASTER[resolveErpForRow(r)].n:'',
+    'Office Person':r.office_person||'',
     'SS Name':r.ss_name||'',
     'Box No':r.box_no||'',
     'Start Series':r.start_series,
@@ -1312,6 +1360,7 @@ async function fetchFilterAndDownload(filter, sheetName, fileName){
     'Status (Recv/Miss)': b.received==='received'?'Received':b.received==='missing'?'Missing':'',
     'Dispatch Status': b.status==='dispatched'?'Dispatched':'Available',
     'Box No':b.box_no||'',
+    'Office Person':b.office_person||'',
     'SS Name':b.ss_name||'',
     'Allotted Station':b.allotted_station_name||'',
     'State':b.state||'',
