@@ -7,6 +7,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./config.js"></script>
+<script>
+const MASTER={"AA006":{"n":"Ahmednagar","s":"Maharashtra","b":"N","i":"N"},"AA014":{"n":"Ahmednagar-Bholegaon","s":"Maharashtra","b":"N","i":"N"},"AC008":{"n":"Aurangabad-Chikalthana","s":"Maharashtra","b":"N","i":"N"},"AB016":{"n":"Aurangabad Beed Byepass","s":"Maharashtra","b":"Y","i":"Y"},"AK022":{"n":"Aurangabad Kanchanwadi","s":"Maharashtra","b":"N","i":"N"},"AY018":{"n":"Aurangabad South City","s":"Maharashtra","b":"N","i":"N"},"AY006":{"n":"Dhule","s":"Maharashtra","b":"Y","i":"Y"},"AY126":{"n":"Dhule Deopur","s":"Maharashtra","b":"Y","i":"N"},"AY033":{"n":"Manmad","s":"Maharashtra","b":"N","i":"N"},"AY060":{"n":"Niphad JODO","s":"Maharashtra","b":"N","i":"N"},"AY017":{"n":"Parbhani - New","s":"Maharashtra","b":"N","i":"N"},"AY002":{"n":"Yeola JODO - LOCO","s":"Maharashtra","b":"N","i":"N"},"AO001":{"n":"Ozar","s":"Maharashtra","b":"N","i":"N"},"AN013":{"n":"Nashik Adgaon","s":"Maharashtra","b":"Y","i":"Y"},"AY019":{"n":"Nashik Dwarka","s":"Maharashtra","b":"Y","i":"Y"},"AY087":{"n":"Nashik Satpur","s":"Maharashtra","b":"N","i":"N"},"AY096":{"n":"Ambaad Satpur","s":"Maharashtra","b":"N","i":"N"},"AY100":{"n":"Nashik Lam Road","s":"Maharashtra","b":"N","i":"N"},"AB022":{"n":"Bhusawal","s":"Maharashtra","b":"N","i":"N"},"AY027":{"n":"Jalna","s":"Maharashtra","b":"N","i":"N"},"AY084":{"n":"Sangamner","s":"Maharashtra","b":"N","i":"N"},"AY116":{"n":"Basmat","s":"Maharashtra","b":"N","i":"N"},"AY125":{"n":"Parbhani Pathri","s":"Maharashtra","b":"N","i":"N"},"AY118":{"n":"Bang Channasandra","s":"Karnataka","b":"Y","i":"Y"},"AY120":{"n":"Baramati New","s":"Maharashtra","b":"N","i":"N"},"AB004":{"n":"Barshi","s":"Maharashtra","b":"N","i":"N"},"AK002":{"n":"Kolhapur","s":"Maharashtra","b":"N","i":"N"},"AY127":{"n":"Kolhapur - City","s":"Maharashtra","b":"N","i":"N"},"AP008":{"n":"Pandharpur","s":"Maharashtra","b":"N","i":"N"},"AI003":{"n":"Indapur-JODO- LOCO","s":"Maharashtra","b":"N","i":"N"},"AP002":{"n":"Palus","s":"Maharashtra","b":"N","i":"N"},"AD005":{"n":"Bang Devanahalli","s":"Karnataka","b":"Y","i":"Y"},"AS001":{"n":"Solapur","s":"Maharashtra","b":"N","i":"N"},"AS114":{"n":"Solapur - 2","s":"Maharashtra","b":"N","i":"N"},"AY099":{"n":"Solapur - 3 Majrewadi","s":"Maharashtra","b":"N","i":"N"},"AY009":{"n":"Karmala JOCO","s":"Maharashtra","b":"N","i":"N"},"AL005":{"n":"Latur Ambejogai Road","s":"Maharashtra","b":"Y","i":"Y"},"JODO2":{"n":"Nanded JODO","s":"Maharashtra","b":"N","i":"N"},"AY038":{"n":"Karad","s":"Maharashtra","b":"N","i":"N"},"AY049":{"n":"Satara","s":"Maharashtra","b":"N","i":"N"},"AY003":{"n":"Bang Yellahanka","s":"Karnataka","b":"Y","i":"Y"},"AY036":{"n":"Chikaballapur","s":"Karnataka","b":"Y","i":"Y"},"AY130":{"n":"Jangamkotte","s":"Karnataka","b":"Y","i":"Y"},"AY139":{"n":"Tumkur-2","s":"Karnataka","b":"Y","i":"Y"},"AY111":{"n":"Jabalpur Adhartal","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ007":{"n":"Jabalpur Durgavati","s":"Madhya Pradesh","b":"Y","i":"Y"},"AY108":{"n":"Jabalpur Karmeta","s":"Madhya Pradesh","b":"Y","i":"Y"},"AJ005":{"n":"Jabalpur Laxmipur","s":"Madhya Pradesh","b":"Y","i":"Y"},"AA013":{"n":"Akola Nandu","s":"Maharashtra","b":"Y","i":"Y"},"AA012":{"n":"Amrawati - Sunderlal","s":"Maharashtra","b":"Y","i":"Y"},"AB010":{"n":"Bang Banaswadi","s":"Karnataka","b":"Y","i":"N"},"JODO6":{"n":"Bang Banergatta JODO","s":"Karnataka","b":"N","i":"N"},"AB001":{"n":"Baramati","s":"Maharashtra","b":"Y","i":"N"},"AY081":{"n":"Bang Kariyanpalayam - (Lingarajpura)","s":"Karnataka","b":"Y","i":"Y"},"JODO11":{"n":"Bang Katrigupe JODO","s":"Karnataka","b":"N","i":"N"},"AL001":{"n":"Bang Lalbaugh","s":"Karnataka","b":"Y","i":"Y"},"AY043":{"n":"Bang Mahadevpura","s":"Karnataka","b":"Y","i":"Y"},"AY031":{"n":"Bang Nandidurga","s":"Karnataka","b":"Y","i":"Y"},"AN011":{"n":"Bang Nayandahalli","s":"Karnataka","b":"Y","i":"Y"},"AN012":{"n":"Bang Neelamangala","s":"Karnataka","b":"Y","i":"Y"},"AY037":{"n":"Nagpur Hingana","s":"Maharashtra","b":"Y","i":"Y"},"AY082":{"n":"Bang Yeshwantpura","s":"Karnataka","b":"Y","i":"Y"},"AJ003":{"n":"Bang JP Nagar","s":"Karnataka","b":"Y","i":"Y"},"AI002":{"n":"Nagpur Imambada","s":"Maharashtra","b":"Y","i":"Y"},"AY129":{"n":"Bang Konankunte","s":"Karnataka","b":"Y","i":"Y"},"AY123":{"n":"Bang Whitefield","s":"Karnataka","b":"Y","i":"Y"},"AB019":{"n":"Bengarpet","s":"Karnataka","b":"Y","i":"N"},"AK001":{"n":"Nagpur Kamptee Rd - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AD006":{"n":"Dodaballapur","s":"Karnataka","b":"N","i":"N"},"AY054":{"n":"Kanakapura LOCO","s":"Karnataka","b":"N","i":"N"},"AK020":{"n":"KGF","s":"Karnataka","b":"Y","i":"N"},"AM006":{"n":"Mulbagal","s":"Karnataka","b":"Y","i":"N"},"AY103":{"n":"Aland JOCO","s":"Karnataka","b":"N","i":"N"},"AY052":{"n":"Belgavi JOCO","s":"Karnataka","b":"N","i":"N"},"JODO9":{"n":"Belgavi JODO","s":"Karnataka","b":"N","i":"N"},"AD004":{"n":"Dharwad","s":"Karnataka","b":"N","i":"N"},"AY026":{"n":"Dharwad - New","s":"Karnataka","b":"N","i":"N"},"AG001":{"n":"Gadag","s":"Karnataka","b":"N","i":"N"},"AG004":{"n":"Gulbarga Ring Road","s":"Karnataka","b":"N","i":"N"},"AY102":{"n":"Gulbarga Fort","s":"Karnataka","b":"N","i":"N"},"AH013":{"n":"Hangal","s":"Karnataka","b":"N","i":"N"},"AH006":{"n":"Haveri","s":"Karnataka","b":"N","i":"N"},"AH012":{"n":"Hubbali Anand Nagar","s":"Karnataka","b":"N","i":"N"},"JODO7":{"n":"Hubbali New JODO","s":"Karnataka","b":"N","i":"N"},"AH004":{"n":"Hubbali Old","s":"Karnataka","b":"N","i":"N"},"AY012":{"n":"Lakshmeshwar","s":"Karnataka","b":"N","i":"N"},"AN014":{"n":"Nippani","s":"Karnataka","b":"N","i":"N"},"AR001":{"n":"Raichur","s":"Karnataka","b":"N","i":"N"},"AY005":{"n":"Sindhanoor","s":"Karnataka","b":"N","i":"N"},"AB017":{"n":"Bhadrawati","s":"Karnataka","b":"N","i":"N"},"AC009":{"n":"Channagiri","s":"Karnataka","b":"N","i":"N"},"AH010":{"n":"Hosdurga","s":"Karnataka","b":"N","i":"N"},"AS016":{"n":"Sagara","s":"Karnataka","b":"N","i":"N"},"AS004":{"n":"Shimoga","s":"Karnataka","b":"N","i":"N"},"AT011":{"n":"Teerathali","s":"Karnataka","b":"N","i":"N"},"AC007":{"n":"Channaraypatna","s":"Karnataka","b":"N","i":"N"},"AC003":{"n":"Chikamaglur","s":"Karnataka","b":"N","i":"N"},"AH005":{"n":"Hassan","s":"Karnataka","b":"N","i":"N"},"AY057":{"n":"Hassan 2 New","s":"Karnataka","b":"N","i":"N"},"AM009":{"n":"Malavalli","s":"Karnataka","b":"N","i":"N"},"AM002":{"n":"Mysore Nie","s":"Karnataka","b":"Y","i":"Y"},"AN007":{"n":"Nanjangud","s":"Karnataka","b":"Y","i":"Y"},"AT017":{"n":"T Narsipura","s":"Karnataka","b":"N","i":"N"},"AY098":{"n":"Bellary 2","s":"Karnataka","b":"N","i":"N"},"AY090":{"n":"Bhatkal","s":"Karnataka","b":"N","i":"N"},"AY066":{"n":"Hebri - JOCO","s":"Karnataka","b":"N","i":"N"},"AY095":{"n":"K R Pete","s":"Karnataka","b":"N","i":"N"},"AY097":{"n":"Kumta","s":"Karnataka","b":"N","i":"N"},"AY041":{"n":"Ankola","s":"Karnataka","b":"N","i":"N"},"AA002":{"n":"Arsikere","s":"Karnataka","b":"N","i":"N"},"AG008":{"n":"Gubbi","s":"Karnataka","b":"N","i":"N"},"AK019":{"n":"Karwar","s":"Karnataka","b":"N","i":"N"},"AY050":{"n":"Kinnigoli","s":"Karnataka","b":"N","i":"N"},"AM003":{"n":"Madhugiri","s":"Karnataka","b":"N","i":"N"},"AM004":{"n":"Mangalore","s":"Karnataka","b":"N","i":"N"},"AP011":{"n":"Puttur","s":"Karnataka","b":"N","i":"N"},"AY034":{"n":"Rayee","s":"Karnataka","b":"N","i":"N"},"AS015":{"n":"Sastana","s":"Karnataka","b":"N","i":"N"},"AS005":{"n":"Sira","s":"Karnataka","b":"N","i":"N"},"AS006":{"n":"Sirsi","s":"Karnataka","b":"N","i":"N"},"AT004":{"n":"Tiptur","s":"Karnataka","b":"N","i":"N"},"AT002":{"n":"Tumkur","s":"Karnataka","b":"Y","i":"Y"},"AY051":{"n":"Udupi - 2 New","s":"Karnataka","b":"Y","i":"N"},"JODO8":{"n":"Udupi JODO","s":"Karnataka","b":"Y","i":"N"},"AV006":{"n":"Vitla","s":"Karnataka","b":"N","i":"N"},"JODO10":{"n":"Kundapur JODO","s":"Karnataka","b":"N","i":"N"},"AB100":{"n":"Bellary","s":"Karnataka","b":"N","i":"N"},"AD002":{"n":"Davangere","s":"Karnataka","b":"N","i":"N"},"AH011":{"n":"Harihara","s":"Karnataka","b":"N","i":"N"},"AB021":{"n":"Harpanahalli","s":"Karnataka","b":"N","i":"N"},"AY016":{"n":"Hosepet","s":"Karnataka","b":"N","i":"N"},"AK017":{"n":"Koppal","s":"Karnataka","b":"N","i":"N"},"AR005":{"n":"Ranebennur","s":"Karnataka","b":"N","i":"N"},"AY107":{"n":"Belur","s":"Karnataka","b":"N","i":"N"},"AY110":{"n":"Gangawati","s":"Karnataka","b":"N","i":"N"},"AY113":{"n":"Kumbra","s":"Karnataka","b":"N","i":"N"},"AY109":{"n":"Mudipu","s":"Karnataka","b":"N","i":"N"},"AY112":{"n":"SINDAGI","s":"Karnataka","b":"N","i":"N"},"AY117":{"n":"Bidar","s":"Karnataka","b":"N","i":"N"},"AY147":{"n":"Challakere DODO - LOCO","s":"Karnataka","b":"N","i":"N"},"AY124":{"n":"Shimoga Bommankatte","s":"Karnataka","b":"N","i":"N"},"AY119":{"n":"Gadag New","s":"Karnataka","b":"N","i":"N"},"AY121":{"n":"Bajpe","s":"Karnataka","b":"N","i":"N"},"AY133":{"n":"Savnoor Puttur","s":"Karnataka","b":"N","i":"N"},"JODO4":{"n":"Nagpur Manewada","s":"Maharashtra","b":"Y","i":"Y"},"AY134":{"n":"Kalladka","s":"Karnataka","b":"N","i":"N"},"AP013":{"n":"Nagpur Pardi-Lic","s":"Maharashtra","b":"Y","i":"Y"},"AY132":{"n":"Bailhongla","s":"Karnataka","b":"N","i":"N"},"AY141":{"n":"Suratkal","s":"Karnataka","b":"N","i":"N"},"AY146":{"n":"Tumkur 3","s":"Karnataka","b":"Y","i":"Y"},"AY145":{"n":"Siddhapura Udupi","s":"Karnataka","b":"N","i":"N"},"AR003":{"n":"Nagpur Radisson - COCO","s":"Maharashtra","b":"Y","i":"Y"},"AH007":{"n":"Hyd Hayat Nagar","s":"Telangana","b":"N","i":"N"},"AT018":{"n":"Nagpur Taj Bagh","s":"Maharashtra","b":"Y","i":"Y"},"AY143":{"n":"Sangli","s":"Maharashtra","b":"Y","i":"N"},"AY004":{"n":"Yeotmal","s":"Maharashtra","b":"Y","i":"Y"},"AA001":{"n":"Ajmer","s":"Rajasthan","b":"Y","i":"Y"},"AD001":{"n":"Dausa","s":"Rajasthan","b":"Y","i":"Y"},"AY001":{"n":"Hyd Yapral","s":"Telangana","b":"N","i":"N"},"AJ006":{"n":"Jaipur Sikar Road","s":"Rajasthan","b":"Y","i":"Y"},"AT008":{"n":"Jaipur T P Nagar","s":"Rajasthan","b":"Y","i":"Y"},"AY105":{"n":"Ananthapur","s":"Telangana","b":"N","i":"N"},"AY030":{"n":"Hyd (Bandlaguda) Uppal","s":"Telangana","b":"Y","i":"Y"},"AA008":{"n":"Hyd Alwaal","s":"Telangana","b":"Y","i":"Y"},"AY058":{"n":"Hyd Bahadurpura","s":"Telangana","b":"Y","i":"Y"},"AB013":{"n":"Hyd Bandlaguda","s":"Telangana","b":"Y","i":"Y"},"AB012":{"n":"Hyd Barakas","s":"Telangana","b":"Y","i":"Y"},"AL002":{"n":"Hyd Lakdi Ka Pool","s":"Telangana","b":"Y","i":"Y"},"AL004":{"n":"Hyd Lalapet","s":"Telangana","b":"Y","i":"Y"},"AK003":{"n":"Kurnool","s":"Telangana","b":"N","i":"N"},"AS008":{"n":"Siddipet","s":"Telangana","b":"Y","i":"N"},"AW001":{"n":"Warangal","s":"Telangana","b":"N","i":"N"},"AN005":{"n":"Nizamabad","s":"Telangana","b":"N","i":"N"},"AA003":{"n":"Hyd Amberpet","s":"Telangana","b":"Y","i":"Y"},"AL003":{"n":"Hyd Lb Nagar","s":"Telangana","b":"Y","i":"Y"},"AP009":{"n":"Hyd Patancheru","s":"Telangana","b":"Y","i":"Y"},"AY069":{"n":"Kamareddy","s":"Telangana","b":"N","i":"N"},"AY104":{"n":"Raydurgam","s":"Telangana","b":"N","i":"N"},"AS007":{"n":"Hyd Sayeedabad","s":"Telangana","b":"Y","i":"Y"},"AB006":{"n":"Bhilwara","s":"Rajasthan","b":"N","i":"N"},"AS112":{"n":"Hyd Shahlibanda","s":"Telangana","b":"Y","i":"Y"},"AS014":{"n":"Hyd Siri Nagar","s":"Telangana","b":"Y","i":"Y"},"JODO12":{"n":"Hyd Yusufguda JODO","s":"Telangana","b":"Y","i":"Y"},"AA004":{"n":"Chennai Aminjikarai","s":"Tamil Nadu","b":"Y","i":"Y"},"AT006":{"n":"Chennai Thiruvallur","s":"Tamil Nadu","b":"N","i":"N"},"AP006":{"n":"Chennai Pattabhiram","s":"Tamil Nadu","b":"Y","i":"N"},"AB018":{"n":"Hyd Balanagar","s":"Telangana","b":"Y","i":"Y"},"AV003":{"n":"Chennai Vepampattu","s":"Tamil Nadu","b":"N","i":"N"},"AT010":{"n":"Chennai Thirumullavoyal","s":"Tamil Nadu","b":"Y","i":"Y"},"AK014":{"n":"Chennai Kovilpathagai","s":"Tamil Nadu","b":"Y","i":"N"},"AY059":{"n":"Koddad","s":"Telangana","b":"Y","i":"Y"},"JODO13":{"n":"Karimnagar - JODO","s":"Telangana","b":"Y","i":"Y"},"AN004":{"n":"Nirmal","s":"Telangana","b":"Y","i":"N"},"AY048":{"n":"Chennai T Nagar","s":"Tamil Nadu","b":"N","i":"N"},"AY080":{"n":"Chennai Arcot Road - Vadapalni","s":"Tamil Nadu","b":"Y","i":"Y"},"AA005":{"n":"Chennai Alapakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AS010":{"n":"Chennai Saidapet","s":"Tamil Nadu","b":"N","i":"N"},"AS011":{"n":"Chennai Seenerikuppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AV002":{"n":"Chennai Villivakam","s":"Tamil Nadu","b":"Y","i":"Y"},"AT016":{"n":"Chennai Thiruninruvur","s":"Tamil Nadu","b":"Y","i":"Y"},"AM008":{"n":"Chennai Madurvoyal","s":"Tamil Nadu","b":"N","i":"N"},"AG005":{"n":"Chennai Gerugambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AN015":{"n":"Chennai Alwarpet New","s":"Tamil Nadu","b":"Y","i":"Y"},"AY047":{"n":"Chennai Perungudi Kottivakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY035":{"n":"Chennai Thiruverkadu","s":"Tamil Nadu","b":"Y","i":"N"},"AY046":{"n":"Chennai Addambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AS012":{"n":"Chennai St.Thomas","s":"Tamil Nadu","b":"Y","i":"Y"},"AY092":{"n":"Chennai GNT Road","s":"Tamil Nadu","b":"Y","i":"Y"},"AS013":{"n":"Chennai Sivabhootam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY023":{"n":"Chennai Nenudungudram-","s":"Tamil Nadu","b":"Y","i":"Y"},"AK015":{"n":"Chennai Kovalam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY024":{"n":"Chennai Saligramam-","s":"Tamil Nadu","b":"Y","i":"N"},"AY056":{"n":"Chennai Nerukundram Madurvoyal","s":"Tamil Nadu","b":"Y","i":"Y"},"AY029":{"n":"Chennai Pallavaram -","s":"Tamil Nadu","b":"Y","i":"Y"},"AY040":{"n":"Chennai Madipakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AK009":{"n":"Chennai Kovalbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AK010":{"n":"Chennai Kondratur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY101":{"n":"Chennai Theerthagariyampattu","s":"Tamil Nadu","b":"N","i":"N"},"AY062":{"n":"Chennai Madhavaram Meenambal","s":"Tamil Nadu","b":"N","i":"N"},"AK006":{"n":"Chennai Kolathur -1","s":"Tamil Nadu","b":"Y","i":"Y"},"AT005":{"n":"Chennai TH Road","s":"Tamil Nadu","b":"Y","i":"Y"},"AK008":{"n":"Chennai Kallikuppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AA007":{"n":"Chennai Ambatur","s":"Tamil Nadu","b":"Y","i":"Y"},"AP012":{"n":"Chennai Perumbakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY022":{"n":"Chennai Sithalapakkam-","s":"Tamil Nadu","b":"Y","i":"Y"},"AV004":{"n":"Chennai Vinayakapuram","s":"Tamil Nadu","b":"Y","i":"Y"},"AN008":{"n":"Chennai Nungambakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY091":{"n":"Chennai Greenways","s":"Tamil Nadu","b":"N","i":"N"},"AM011":{"n":"Chennai Menjur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY065":{"n":"Chennai Ennore Iocl Express","s":"Tamil Nadu","b":"N","i":"N"},"AY063":{"n":"Chennai Pammal Tambaram","s":"Tamil Nadu","b":"Y","i":"N"},"AY085":{"n":"Chennai Shollinganallur","s":"Tamil Nadu","b":"Y","i":"N"},"AY067":{"n":"Chennai Kayrembedu","s":"Tamil Nadu","b":"N","i":"N"},"AT009":{"n":"Chennai Thondiarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AP010":{"n":"Chennai Padappai","s":"Tamil Nadu","b":"Y","i":"N"},"AA011":{"n":"Chennai Andanguppam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY021":{"n":"Chennai Tambaram Mudichur Road","s":"Tamil Nadu","b":"Y","i":"N"},"AY045":{"n":"Chennai Perangalatur","s":"Tamil Nadu","b":"Y","i":"N"},"AE002":{"n":"Chennai Ernaavur","s":"Tamil Nadu","b":"Y","i":"Y"},"AY079":{"n":"Chennai Vardharajapuram","s":"Tamil Nadu","b":"Y","i":"N"},"AY086":{"n":"Chennai Thirumudivakkam","s":"Tamil Nadu","b":"Y","i":"N"},"AJ002":{"n":"Jollarpet","s":"Tamil Nadu","b":"Y","i":"Y"},"AT013":{"n":"Thiruthani","s":"Tamil Nadu","b":"N","i":"Y"},"AY078":{"n":"Chennai Thiruvottiyur - Jeevanlal Nagar","s":"Tamil Nadu","b":"Y","i":"Y"},"AK005":{"n":"Kancheepuram","s":"Tamil Nadu","b":"N","i":"N"},"AY055":{"n":"Thadaperumpakkam","s":"Tamil Nadu","b":"Y","i":"Y"},"AC004":{"n":"Coimbatore Thadagam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY089":{"n":"Chennai Egmore","s":"Tamil Nadu","b":"Y","i":"N"},"AC005":{"n":"Coimbatore Veeranpandi","s":"Tamil Nadu","b":"Y","i":"Y"},"AK004":{"n":"Kangeyam","s":"Tamil Nadu","b":"N","i":"N"},"AU002":{"n":"Chennai Urapakkam","s":"Tamil Nadu","b":"Y","i":"N"},"AY042":{"n":"Chennai Vandalur","s":"Tamil Nadu","b":"Y","i":"Y"},"AK012":{"n":"Kallipatti","s":"Tamil Nadu","b":"N","i":"N"},"AK013":{"n":"Kumarapallayam","s":"Tamil Nadu","b":"N","i":"N"},"AY094":{"n":"Kumarapallayam - Agraharam","s":"Tamil Nadu","b":"N","i":"N"},"AT014":{"n":"Thiruvannamalai-7","s":"Tamil Nadu","b":"Y","i":"Y"},"AN016":{"n":"Akkiyampattti","s":"Tamil Nadu","b":"N","i":"N"},"AS009":{"n":"Coimbatore Sanganoor","s":"Tamil Nadu","b":"Y","i":"Y"},"AY025":{"n":"Anthiyur New","s":"Tamil Nadu","b":"Y","i":"N"},"AY039":{"n":"Chithode - Erode LOCO","s":"Tamil Nadu","b":"N","i":"N"},"AY083":{"n":"Veerappalayam Edapaddi- Selam Dist","s":"Tamil Nadu","b":"N","i":"N"},"DODO18":{"n":"Makkinancombai - DODO","s":"Tamil Nadu","b":"N","i":"N"},"AN009":{"n":"Satyamangalam New","s":"Tamil Nadu","b":"Y","i":"N"},"AS100":{"n":"Satyamangalam","s":"Tamil Nadu","b":"Y","i":"N"},"AB015":{"n":"Belukuruchi","s":"Tamil Nadu","b":"Y","i":"N"},"AY010":{"n":"Kolapalur JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY011":{"n":"Alukulli JOCO","s":"Tamil Nadu","b":"Y","i":"Y"},"AY008":{"n":"Dharapuram","s":"Tamil Nadu","b":"Y","i":"N"},"AY020":{"n":"Kemmyampatti- Erode - Henry","s":"Tamil Nadu","b":"N","i":"N"},"AK021":{"n":"Kondichetipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AE001":{"n":"Erode Bhavani","s":"Tamil Nadu","b":"Y","i":"N"},"AY093":{"n":"Elumuthur Moodakurchi","s":"Tamil Nadu","b":"N","i":"N"},"AY014":{"n":"Vilsarampatti LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AY015":{"n":"Sivanamalai LOCO","s":"Tamil Nadu","b":"Y","i":"N"},"AP004":{"n":"Peramballur","s":"Tamil Nadu","b":"N","i":"N"},"AD003":{"n":"Dindigul","s":"Tamil Nadu","b":"N","i":"N"},"AT007":{"n":"Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY028":{"n":"Erode Avalapoondarai","s":"Tamil Nadu","b":"Y","i":"N"},"AK011":{"n":"Kinathakadavu","s":"Tamil Nadu","b":"N","i":"N"},"AR004":{"n":"Pollachie Rasakapalayam","s":"Tamil Nadu","b":"N","i":"N"},"AG006":{"n":"Gujiliamparai","s":"Tamil Nadu","b":"N","i":"N"},"AM010":{"n":"Melur","s":"Tamil Nadu","b":"N","i":"N"},"AY044":{"n":"Muthampalayam - Chennimalai Road","s":"Tamil Nadu","b":"Y","i":"N"},"AY068":{"n":"Thoraiyur Trichy","s":"Tamil Nadu","b":"N","i":"N"},"AY122":{"n":"Malasamundram","s":"Tamil Nadu","b":"N","i":"N"},"AY128":{"n":"Kalipalayam Avinashi-TIRUPUR","s":"Tamil Nadu","b":"Y","i":"Y"},"AY140":{"n":"Chenna- Ambattur Red hills","s":"Tamil Nadu","b":"Y","i":"Y"},"AY142":{"n":"Chennai Pulicat Chinnakavanam","s":"Tamil Nadu","b":"Y","i":"Y"},"AY144":{"n":"Illayankudi","s":"Tamil Nadu","b":"N","i":"N"},"AY106":{"n":"Pottyreddypatti","s":"Tamil Nadu","b":"Y","i":"N"},"AN006":{"n":"Madurai (New)","s":"Tamil Nadu","b":"Y","i":"Y"},"AP014":{"n":"Trichy Panjapur","s":"Tamil Nadu","b":"Y","i":"N"},"AO002":{"n":"Odaipatti","s":"Tamil Nadu","b":"Y","i":"N"},"AK016":{"n":"Khandwa","s":"Madhya Pradesh","b":"N","i":"N"},"AB020":{"n":"Burhanpur","s":"Madhya Pradesh","b":"N","i":"N"},"AY053":{"n":"Sagar","s":"Madhya Pradesh","b":"N","i":"N"},"AB008":{"n":"Barasat","s":"West Bengal","b":"Y","i":"Y"},"DODO1":{"n":"Thiravator DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO2":{"n":"Mkb Nagar DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO3":{"n":"Moolakadai DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO4":{"n":"Chennai Madhavaram Puzal - DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO5":{"n":"Kavindapadi DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO6":{"n":"Madhuthapalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO16":{"n":"Gobichettypalayam DODO","s":"Tamil Nadu","b":"N","i":"N"},"DODO13":{"n":"Ramnagar DODO","s":"Karnataka","b":"N","i":"N"},"DODO10":{"n":"Kar Bagalkot DODO","s":"Karnataka","b":"N","i":"N"},"DODO11":{"n":"Bijapur DODO","s":"Karnataka","b":"N","i":"N"},"DODO12":{"n":"Kunigal DODO","s":"Karnataka","b":"N","i":"N"},"DODO17":{"n":"YADGIR","s":"Karnataka","b":"N","i":"N"},"DODO19":{"n":"Byndoor","s":"Karnataka","b":"N","i":"N"},"DODO15":{"n":"Kalamna DODO","s":"Maharashtra","b":"N","i":"N"},"DODO14":{"n":"Karimnagar DODO","s":"Telangana","b":"N","i":"N"}};
+const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Telangana":"AP/TL","Andhra Pradesh":"AP/TL","Madhya Pradesh":"MP","Rajasthan":"RAJ","West Bengal":"WB"};
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -149,6 +153,58 @@
   .placeholder-box{background:var(--card);border:1.5px dashed var(--line);border-radius:16px;padding:60px;text-align:center;color:var(--soft);font-size:13.5px;line-height:1.7}
   .placeholder-box b{color:var(--mut)}
 
+  /* Sticky filter strip */
+  .fstrip{position:sticky;top:0;z-index:50;background:rgba(244,246,251,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin:18px 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 4px 16px rgba(16,32,58,.04)}
+  .fstrip .ftitle{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;padding:0 4px 0 2px;display:flex;align-items:center;gap:6px}
+  .fstrip .ftitle::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple)}
+  .fstrip .fgroup{display:flex;align-items:center;gap:7px}
+  .fstrip .fgroup label{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .fstrip input[type=date],.fstrip select{border:1.5px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12.5px;font-family:inherit;background:#fff;color:var(--ink);transition:.12s}
+  .fstrip input[type=date]{font-family:"Spline Sans Mono",monospace;width:130px}
+  .fstrip input[type=date]:focus,.fstrip select:focus{outline:none;border-color:var(--purple)}
+  .fstrip .fclear{background:none;border:none;color:var(--rose);font-size:12px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:8px;font-family:inherit}
+  .fstrip .fclear:hover{background:rgba(242,78,110,.10)}
+  .fstrip .fbadge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,.10);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:30px;margin-left:auto}
+  .fstrip .fbadge .dot{width:7px;height:7px;border-radius:50%;background:var(--purple);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .filter-readonly-banner{font-size:12px;color:var(--mut);background:#fafbfe;border:1px dashed var(--line);border-radius:10px;padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .filter-readonly-banner b{color:var(--ink)}
+  .filter-readonly-banner::before{content:"\2139";font-weight:700;color:var(--purple);font-size:13px}
+
+  /* Dashboard layout */
+  .dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+  .dash-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .dash-card .ribbon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+  .dash-card .n{font-size:24px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .dash-card .l{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;margin-top:3px;font-weight:600}
+  .dash-card .sub{color:var(--soft);font-size:11px;margin-top:4px;font-weight:500}
+
+  .dash-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  @media(max-width:900px){.dash-row{grid-template-columns:1fr}}
+
+  .dash-panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .dp-head{padding:14px 18px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .dp-head strong{font-size:13px;font-weight:700}
+  .dp-head .dp-meta{font-size:11px;color:var(--mut);font-weight:600}
+  .dp-head .seg{display:inline-flex;background:#fafbfe;border:1px solid var(--line);border-radius:9px;padding:2px;font-size:11px}
+  .dp-head .seg button{background:none;border:none;padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;color:var(--mut);cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px}
+  .dp-head .seg button.on{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(124,58,237,.30)}
+  .dp-body{max-height:380px;overflow:auto}
+  .bk-row{display:grid;grid-template-columns:100px 1fr 60px;gap:10px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line2);font-size:12.5px;cursor:pointer;transition:.12s}
+  .bk-row:hover{background:#faf8ff}
+  .bk-row.active{background:rgba(124,58,237,.07)}
+  .bk-row:last-child{border-bottom:none}
+  .bk-row .bk-name{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bk-row .bk-name .erp{font-family:"Spline Sans Mono",monospace;font-size:10.5px;color:var(--soft);font-weight:600;margin-right:6px}
+  .bk-row .bk-bar{position:relative;height:8px;background:#eef2f8;border-radius:4px;overflow:hidden}
+  .bk-row .bk-bar .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--purple),#a855f7);border-radius:4px;transition:.3s}
+  .bk-row .bk-n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;color:var(--ink)}
+  .bk-empty{padding:30px;text-align:center;color:var(--soft);font-size:12.5px}
+
+  .ddrill{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.10);color:var(--purple);font-size:12px;font-weight:700;padding:7px 12px;border-radius:9px;margin-bottom:10px}
+  .ddrill button{background:none;border:none;color:var(--purple);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0 0 0 6px}
+
   /* Batches strip */
   .batches-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
   .batches-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -208,6 +264,34 @@
   </div>
 
   <div id="mainView" style="display:none">
+    <div class="fstrip" id="fstrip">
+      <div class="ftitle">Filters</div>
+      <div class="fgroup">
+        <label>From</label>
+        <input type="date" id="f-from">
+      </div>
+      <div class="fgroup">
+        <label>To</label>
+        <input type="date" id="f-to">
+      </div>
+      <div class="fgroup">
+        <label>Date by</label>
+        <select id="f-datecol">
+          <option value="dispatch_date" selected>Dispatch</option>
+          <option value="batch_created_at">Created</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <label>State</label>
+        <select id="f-state"><option value="">All</option></select>
+      </div>
+      <div class="fgroup">
+        <label>SS Name</label>
+        <select id="f-ss"><option value="">All</option></select>
+      </div>
+      <button class="fclear" id="f-clear">Clear filters</button>
+      <span class="fbadge" id="f-badge" style="display:none"><span class="dot"></span><span id="f-badge-text">Filtered</span></span>
+    </div>
     <div id="stats" class="stat-row"></div>
     <div class="tabs">
       <div class="tab active" data-t="prepare">&#128221; Prepare QR Data</div>
@@ -215,6 +299,9 @@
     </div>
 
     <div id="prepareTab">
+      <div class="filter-readonly-banner" id="prep-filter-banner" style="display:none">
+        Filters above don't apply on this tab — they only affect the <b>Dashboard View</b>. Switch tab to see filtered results.
+      </div>
       <div class="batches-card" id="batchesCard">
         <div class="batches-head"><h4>Print Batches</h4></div>
         <div class="batches-grid" id="batchesGrid"></div>
@@ -247,10 +334,35 @@
     </div>
 
     <div id="dashboardTab" style="display:none">
-      <div class="placeholder-box">
-        <div style="font-size:36px;margin-bottom:14px">&#128202;</div>
-        <b>Dashboard View &mdash; coming in Phase 2</b><br><br>
-        Once you've used the Prepare QR Data tab to enter and dispatch a few bunches, the Dashboard View will give you filters by State, Date, Station, Box, and SS Name with full rollups.
+      <div id="dash-drill-banner" style="display:none"></div>
+      <div id="dash-cards" class="dash-cards"></div>
+      <div class="dash-row">
+        <div class="dash-panel">
+          <div class="dp-head">
+            <strong>&#127482;&#127475; By State</strong>
+            <span class="dp-meta" id="state-meta">Click a row to drill down</span>
+          </div>
+          <div class="dp-body" id="state-body"></div>
+        </div>
+        <div class="dash-panel">
+          <div class="dp-head">
+            <strong>&#128205; By Station <span class="dp-meta" id="station-count"></span></strong>
+            <div class="seg" id="station-seg">
+              <button data-mode="master" class="on">Master ERPs</button>
+              <button data-mode="freetext">Free Text</button>
+            </div>
+          </div>
+          <div class="dp-body" id="station-body"></div>
+        </div>
+      </div>
+      <div class="dash-panel">
+        <div class="dp-head">
+          <strong>&#128221; Detail Table <span class="dp-meta" id="detail-count"></span></strong>
+          <div style="display:flex;gap:8px">
+            <button class="btn" id="dash-dl-excel">&#8595; Download Excel</button>
+          </div>
+        </div>
+        <div class="tbl-scroll" style="max-height:460px"><div id="dash-detail-host"></div></div>
       </div>
     </div>
   </div>
@@ -329,7 +441,13 @@ if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const STATES=['TN','RAJ','AP/TL','MP','MH','WB','KAR'];
 let CURRENT_USER=null,CURRENT_PROFILE=null,IS_ADMIN=false;
-const S={bunches:[],batches:[],stats:null,filterStatus:'available',filterBatchId:null,editingBatchId:null};
+const S={bunches:[],batches:[],stats:null,filterStatus:'available',filterBatchId:null,editingBatchId:null,
+  /* dashboard filters */
+  filt:{from:'',to:'',dateCol:'dispatch_date',state:'',ss:''},
+  stationMode:'master',
+  drillState:'',drillStation:'',
+  allBunches:[] /* full unfiltered list for dashboard */
+};
 
 document.getElementById('yr').textContent=new Date().getFullYear();
 
@@ -366,6 +484,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   const which=t.dataset.t;
   document.getElementById('prepareTab').style.display=which==='prepare'?'block':'none';
   document.getElementById('dashboardTab').style.display=which==='dashboard'?'block':'none';
+  if(which==='dashboard'){loadDashboard();}
 });
 
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -391,7 +510,11 @@ async function loadBatches(){
   if(error){console.warn(error.message);return;}
   S.batches=data||[];renderBatches();
 }
-async function loadAll(){await Promise.all([loadStats(),loadBatches(),loadBunches()]);}
+async function loadAll(){
+  await Promise.all([loadStats(),loadBatches(),loadBunches()]);
+  /* if dashboard is showing, refresh it too */
+  if(document.getElementById('dashboardTab').style.display==='block'){await loadDashboard();}
+}
 
 function renderBatches(){
   const grid=document.getElementById('batchesGrid');
@@ -585,6 +708,290 @@ async function onResetRow(e){
   if(error){toast(error.message,'err');return;}
   toast('Cleared','ok');await loadAll();
 }
+
+/* ============================================================
+   DASHBOARD VIEW
+   ============================================================ */
+
+/* Load all bunches (unfiltered) so we can apply client-side filters fast */
+async function loadDashboard(){
+  const {data,error}=await sb.rpc('qr_list_bunches',{p_filter:null});
+  if(error){toast(error.message,'err');return;}
+  S.allBunches=data||[];
+  /* Build SS Name dropdown from data */
+  const ssNames=Array.from(new Set(S.allBunches.map(b=>b.ss_name).filter(Boolean))).sort();
+  const ssSel=document.getElementById('f-ss');
+  const curSs=ssSel.value;
+  ssSel.innerHTML='<option value="">All</option>'+ssNames.map(n=>'<option value="'+escapeHTML(n)+'"'+(curSs===n?' selected':'')+'>'+escapeHTML(n)+'</option>').join('');
+  renderDashboard();
+}
+
+function dashFilteredRows(){
+  const f=S.filt;
+  return S.allBunches.filter(b=>{
+    if(f.state && b.state!==f.state) return false;
+    if(f.ss && b.ss_name!==f.ss) return false;
+    if(f.from || f.to){
+      const v=b[f.dateCol];if(!v) return false;
+      const d=v.length>10?v.slice(0,10):v;
+      if(f.from && d<f.from) return false;
+      if(f.to && d>f.to) return false;
+    }
+    return true;
+  });
+}
+
+function renderDashboard(){
+  const rows=dashFilteredRows();
+  /* CARDS */
+  const totalQty=rows.reduce((a,b)=>a+(b.qty||0),0);
+  const dispRows=rows.filter(r=>r.status==='dispatched');
+  const availRows=rows.filter(r=>r.status==='available' && (!r.received||r.received==='received'));
+  const missingRows=rows.filter(r=>r.received==='missing');
+  const dispStations=new Set(dispRows.map(r=>r.allotted_station_name).filter(Boolean));
+  const dispQty=dispRows.reduce((a,b)=>a+(b.qty||0),0);
+  const availQty=availRows.reduce((a,b)=>a+(b.qty||0),0);
+  const missQty=missingRows.reduce((a,b)=>a+(b.qty||0),0);
+  const cards=[
+    ['&#128640;','QR Codes Dispatched',fmtN(dispQty),'r-green',dispRows.length+' bunches'],
+    ['&#128205;','Stations Reached',fmtN(dispStations.size),'r-blue',''],
+    ['&#9203;','Available QRs',fmtN(availQty),'r-amber',availRows.length+' bunches'],
+    ['&#10060;','Missing QRs',fmtN(missQty),'r-rose',missingRows.length+' bunches'],
+    ['&#128220;','Total in View',fmtN(totalQty),'r-purple',rows.length+' bunches']
+  ];
+  document.getElementById('dash-cards').innerHTML=cards.map(c=>
+    '<div class="dash-card"><div class="ribbon '+c[3]+'">'+c[0]+'</div><div class="n">'+c[2]+'</div><div class="l">'+c[1]+'</div>'+(c[4]?'<div class="sub">'+c[4]+'</div>':'')+'</div>'
+  ).join('');
+
+  /* BREAKDOWN — apply drilldown filter to rows for breakdowns */
+  let breakdownRows=rows;
+  if(S.drillState) breakdownRows=breakdownRows.filter(r=>r.state===S.drillState);
+  if(S.drillStation){
+    if(S.stationMode==='master'){
+      breakdownRows=breakdownRows.filter(r=>{
+        const erp=resolveErpForRow(r);return erp===S.drillStation;
+      });
+    } else {
+      breakdownRows=breakdownRows.filter(r=>(r.allotted_station_name||'').trim()===S.drillStation);
+    }
+  }
+
+  /* Drill banner */
+  const dbar=document.getElementById('dash-drill-banner');
+  if(S.drillState || S.drillStation){
+    let txt='';
+    if(S.drillState) txt+='State: <b>'+S.drillState+'</b>';
+    if(S.drillStation){
+      const name=S.stationMode==='master'?(MASTER[S.drillStation]?MASTER[S.drillStation].n+' ('+S.drillStation+')':S.drillStation):S.drillStation;
+      txt+=(txt?' &middot; ':'')+'Station: <b>'+escapeHTML(name)+'</b>';
+    }
+    dbar.innerHTML='<div class="ddrill">Drilled: '+txt+'<button id="clear-drill">&times; Clear</button></div>';
+    dbar.style.display='block';
+    document.getElementById('clear-drill').onclick=()=>{S.drillState='';S.drillStation='';renderDashboard();};
+  } else dbar.style.display='none';
+
+  renderStateBreakdown(rows);
+  renderStationBreakdown(rows);
+  renderDetailTable(breakdownRows);
+}
+
+function renderStateBreakdown(rows){
+  /* Aggregate by state — count dispatched QR qty */
+  const map={};
+  rows.forEach(r=>{
+    const st=r.state||'(unspecified)';
+    if(!map[st]) map[st]={state:st,qty:0,bunches:0,dispatched:0,available:0,missing:0};
+    map[st].bunches++;
+    if(r.status==='dispatched'){map[st].dispatched++;map[st].qty+=r.qty||0;}
+    else if(r.received==='missing') map[st].missing++;
+    else map[st].available++;
+  });
+  const arr=Object.values(map).sort((a,b)=>b.qty-a.qty);
+  const max=Math.max(1,...arr.map(x=>x.qty));
+  const host=document.getElementById('state-body');
+  if(!arr.length){host.innerHTML='<div class="bk-empty">No data in current filter.</div>';return;}
+  host.innerHTML=arr.map(x=>{
+    const pct=Math.round(x.qty/max*100);
+    const active=S.drillState===x.state?'active':'';
+    return '<div class="bk-row '+active+'" data-state="'+escapeHTML(x.state)+'">'+
+      '<div class="bk-name">'+escapeHTML(x.state)+'</div>'+
+      '<div class="bk-bar"><div class="fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="bk-n">'+fmtN(x.qty)+'</div></div>';
+  }).join('');
+  host.querySelectorAll('.bk-row').forEach(el=>el.onclick=()=>{
+    const st=el.dataset.state;
+    S.drillState=S.drillState===st?'':st;
+    S.drillStation='';
+    renderDashboard();
+  });
+}
+
+function resolveErpForRow(r){
+  /* Try to match the free-text "allotted_station_name" against MASTER by name (case-insensitive contains) */
+  const txt=(r.allotted_station_name||'').trim().toLowerCase();
+  if(!txt) return null;
+  /* Direct ERP match: if user typed "AY045" or similar, use that */
+  const upper=txt.toUpperCase();
+  if(MASTER[upper]) return upper;
+  /* Otherwise fuzzy match on station name */
+  let best=null;
+  for(const erp in MASTER){
+    const n=MASTER[erp].n.toLowerCase();
+    if(n===txt){return erp;}
+    if(!best && (n.includes(txt) || txt.includes(n))) best=erp;
+  }
+  return best;
+}
+
+function renderStationBreakdown(rows){
+  const map={};
+  rows.forEach(r=>{
+    let key;
+    if(S.stationMode==='master'){
+      const erp=resolveErpForRow(r);
+      key=erp||'(unmatched)';
+    } else {
+      key=(r.allotted_station_name||'').trim()||'(unspecified)';
+    }
+    if(!map[key]) map[key]={key,qty:0,bunches:0};
+    map[key].bunches++;
+    if(r.status==='dispatched') map[key].qty+=r.qty||0;
+  });
+  const arr=Object.values(map).sort((a,b)=>b.qty-a.qty).slice(0,30);
+  document.getElementById('station-count').textContent='('+arr.length+(arr.length>=30?' shown of '+Object.keys(map).length:'')+')';
+  const max=Math.max(1,...arr.map(x=>x.qty));
+  const host=document.getElementById('station-body');
+  if(!arr.length){host.innerHTML='<div class="bk-empty">No data in current filter.</div>';return;}
+  host.innerHTML=arr.map(x=>{
+    const pct=Math.round(x.qty/max*100);
+    const active=S.drillStation===x.key?'active':'';
+    let label='';
+    if(S.stationMode==='master'){
+      if(x.key==='(unmatched)') label='<span style="color:var(--rose)">(unmatched)</span>';
+      else if(MASTER[x.key]) label='<span class="erp">'+x.key+'</span>'+escapeHTML(MASTER[x.key].n);
+      else label='<span class="erp">'+escapeHTML(x.key)+'</span>';
+    } else label=escapeHTML(x.key);
+    return '<div class="bk-row '+active+'" data-station="'+escapeHTML(x.key)+'">'+
+      '<div class="bk-name">'+label+'</div>'+
+      '<div class="bk-bar"><div class="fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="bk-n">'+fmtN(x.qty)+'</div></div>';
+  }).join('');
+  host.querySelectorAll('.bk-row').forEach(el=>el.onclick=()=>{
+    const st=el.dataset.station;
+    S.drillStation=S.drillStation===st?'':st;
+    renderDashboard();
+  });
+}
+
+function renderDetailTable(rows){
+  document.getElementById('detail-count').textContent='('+rows.length+' rows)';
+  if(!rows.length){
+    document.getElementById('dash-detail-host').innerHTML='<div class="empty">No rows match current filters.</div>';
+    return;
+  }
+  const head='<tr>'+
+    '<th>Status</th><th>State</th><th>Allotted Station</th><th>SS Name</th><th>Box</th>'+
+    '<th>Start</th><th>End</th><th class="num">Qty</th><th>Dispatch Date</th><th>Updated</th></tr>';
+  const body=rows.map(r=>{
+    let chip='';
+    if(r.status==='dispatched') chip='<span class="chip dp">Dispatched</span>';
+    else if(r.received==='missing') chip='<span class="chip" style="background:rgba(242,78,110,.14);color:var(--rose)">Missing</span>';
+    else chip='<span class="chip av">Available</span>';
+    return '<tr>'+
+      '<td>'+chip+'</td>'+
+      '<td>'+escapeHTML(r.state||'\u2014')+'</td>'+
+      '<td>'+escapeHTML(r.allotted_station_name||'\u2014')+'</td>'+
+      '<td>'+escapeHTML(r.ss_name||'\u2014')+'</td>'+
+      '<td>'+escapeHTML(r.box_no||'\u2014')+'</td>'+
+      '<td class="ser">'+r.start_series+'</td>'+
+      '<td class="ser">'+r.end_series+'</td>'+
+      '<td class="num">'+fmtN(r.qty)+'</td>'+
+      '<td class="mono">'+(r.dispatch_date||'\u2014')+'</td>'+
+      '<td class="mono">'+(r.updated_at?fmtDateTime(r.updated_at):'\u2014')+'</td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById('dash-detail-host').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
+}
+
+/* Station mode segmented control */
+document.querySelectorAll('#station-seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#station-seg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  S.stationMode=b.dataset.mode;
+  S.drillStation='';
+  renderDashboard();
+});
+
+/* Filter strip wiring */
+function syncFilters(){
+  S.filt.from=document.getElementById('f-from').value;
+  S.filt.to=document.getElementById('f-to').value;
+  S.filt.dateCol=document.getElementById('f-datecol').value;
+  S.filt.state=document.getElementById('f-state').value;
+  S.filt.ss=document.getElementById('f-ss').value;
+  updateFilterBadge();
+  /* Update read-only banner on prepare tab */
+  document.getElementById('prep-filter-banner').style.display=anyFiltersActive()?'flex':'none';
+  /* Update dashboard if it's active */
+  if(document.getElementById('dashboardTab').style.display==='block'){
+    S.drillState='';S.drillStation='';
+    renderDashboard();
+  }
+}
+function anyFiltersActive(){return !!(S.filt.from||S.filt.to||S.filt.state||S.filt.ss);}
+function updateFilterBadge(){
+  const badge=document.getElementById('f-badge');
+  if(!anyFiltersActive()){badge.style.display='none';return;}
+  const bits=[];
+  if(S.filt.from||S.filt.to){bits.push((S.filt.from||'…')+' \u2013 '+(S.filt.to||'…'));}
+  if(S.filt.state) bits.push(S.filt.state);
+  if(S.filt.ss) bits.push('SS:'+S.filt.ss);
+  document.getElementById('f-badge-text').textContent=bits.join(' \u00B7 ');
+  badge.style.display='inline-flex';
+}
+['f-from','f-to','f-datecol','f-state','f-ss'].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.onchange=syncFilters;
+});
+/* Populate state filter dropdown */
+(function initStateFilter(){
+  const sel=document.getElementById('f-state');
+  STATES.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+})();
+document.getElementById('f-clear').onclick=()=>{
+  ['f-from','f-to','f-state','f-ss'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-datecol').value='dispatch_date';
+  syncFilters();
+};
+
+/* Excel download from dashboard */
+document.getElementById('dash-dl-excel').onclick=()=>{
+  const rows=dashFilteredRows();
+  if(S.drillState) rows.splice(0,rows.length,...rows.filter(r=>r.state===S.drillState));
+  /* Note: drillStation also implicitly applied via current display, but for download we use full filtered set */
+  if(!rows.length){toast('No rows to export','err');return;}
+  const out=rows.map(r=>({
+    'State':r.state||'',
+    'Allotted Station':r.allotted_station_name||'',
+    'Master ERP':resolveErpForRow(r)||'',
+    'Master Station Name':(resolveErpForRow(r)&&MASTER[resolveErpForRow(r)])?MASTER[resolveErpForRow(r)].n:'',
+    'SS Name':r.ss_name||'',
+    'Box No':r.box_no||'',
+    'Start Series':r.start_series,
+    'End Series':r.end_series,
+    'Qty':r.qty,
+    'Status': r.status==='dispatched'?'Dispatched':r.received==='missing'?'Missing':'Available',
+    'Received Mark':r.received==='received'?'Yes':r.received==='missing'?'Missing':'',
+    'Dispatch Date':r.dispatch_date||'',
+    'Updated':r.updated_at?new Date(r.updated_at).toLocaleString('en-IN'):'',
+    'Updated By':r.updated_by_name||'',
+    'Print Batch':r.batch_print_start+'-'+r.batch_print_end
+  }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),'Dashboard');
+  const stamp=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,'QR_Dashboard_'+stamp+'.xlsx');
+  toast('Downloaded '+out.length+' rows','ok');
+};
 
 function splitPreview(start,end,size){
   const total=end-start+1;const bunches=Math.ceil(total/size);
