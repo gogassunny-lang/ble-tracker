@@ -205,6 +205,65 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
   .ddrill{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.10);color:var(--purple);font-size:12px;font-weight:700;padding:7px 12px;border-radius:9px;margin-bottom:10px}
   .ddrill button{background:none;border:none;color:var(--purple);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0 0 0 6px}
 
+  /* Row selection checkbox */
+  .cb-cell{width:32px;text-align:center}
+  .cb-cell input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:var(--purple)}
+
+  /* Bulk-fill bar */
+  .bulkbar{display:none;background:linear-gradient(135deg,rgba(124,58,237,.10),rgba(168,85,247,.05));border:1.5px solid rgba(124,58,237,.30);border-radius:12px;padding:12px 14px;margin-bottom:0;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:62px;z-index:6;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .bulkbar.on{display:flex}
+  .bulkbar .bb-count{font-weight:800;color:var(--purple);font-size:13px;padding-right:6px;border-right:1.5px solid rgba(124,58,237,.25);margin-right:4px}
+  .bulkbar input,.bulkbar select{border:1.5px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;font-family:inherit;background:#fff;min-width:0}
+  .bulkbar input{width:115px}
+  .bulkbar select{width:90px}
+  .bulkbar .bb-lbl{font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .bulkbar .bb-apply{background:var(--grad-purple);color:#fff;border:none;padding:8px 16px;font-size:12.5px;font-weight:700;border-radius:9px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(124,58,237,.30)}
+  .bulkbar .bb-apply:hover{transform:translateY(-1px)}
+  .bulkbar .bb-clear{background:none;border:none;color:var(--rose);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:6px 10px;border-radius:7px;margin-left:auto}
+  .bulkbar .bb-clear:hover{background:rgba(242,78,110,.10)}
+
+  /* Range picker */
+  .rpwrap{position:relative;display:inline-block}
+  .rpbtn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit;transition:.12s}
+  .rpbtn:hover{border-color:var(--purple);color:var(--purple)}
+  .rpbtn.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .rppanel{display:none;position:absolute;top:calc(100% + 6px);left:0;width:330px;background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow-lg);z-index:30;overflow:hidden}
+  .rppanel.open{display:block}
+  .rphead{padding:10px 12px;border-bottom:1px solid var(--line2)}
+  .rphead input{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:7px 11px;font-size:12px;font-family:inherit}
+  .rphead input:focus{outline:none;border-color:var(--purple)}
+  .rplist{max-height:280px;overflow:auto;padding:4px 0}
+  .rpitem{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:12.5px;transition:.1s;border-bottom:1px solid var(--line2)}
+  .rpitem:last-child{border-bottom:none}
+  .rpitem:hover{background:#faf8ff}
+  .rpitem.on{background:rgba(124,58,237,.07)}
+  .rpitem input[type=checkbox]{accent-color:var(--purple)}
+  .rpitem .rprange{font-family:"Spline Sans Mono",monospace;font-weight:700;color:var(--purple);flex:1}
+  .rpitem .rpstat{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.3px}
+  .rpitem .rpstat.av{background:rgba(245,165,36,.16);color:#c47e0a}
+  .rpitem .rpstat.dp{background:rgba(22,179,100,.13);color:var(--green)}
+  .rpitem .rpstat.mi{background:rgba(242,78,110,.13);color:var(--rose)}
+  .rpfoot{padding:9px 12px;border-top:1px solid var(--line2);display:flex;gap:8px;background:#fafbfe}
+  .rpfoot button{flex:1;padding:7px;font-size:11.5px;font-weight:700;border-radius:7px;cursor:pointer;font-family:inherit;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:.12s}
+  .rpfoot button:hover{border-color:var(--purple);color:var(--purple)}
+  .rpfoot button.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .rpfoot button.primary:hover{background:#6c2bd9}
+  .rpempty{padding:30px 16px;text-align:center;color:var(--soft);font-size:12px}
+
+  /* Range-filter chip */
+  .rfchip{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--purple);background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.30);padding:5px 11px;border-radius:20px;margin-left:8px}
+  .rfchip button{background:none;border:none;color:var(--purple);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0 0 0 4px;line-height:1}
+
+  /* Save flash indicator on row */
+  tr.saved-flash td:not(.cb-cell){animation:savedFlash .9s ease-out}
+  @keyframes savedFlash{0%{background:rgba(22,179,100,.18)}100%{background:transparent}}
+  tr.save-error td:not(.cb-cell){animation:errorFlash 1.2s ease-out}
+  @keyframes errorFlash{0%{background:rgba(242,78,110,.18)}100%{background:transparent}}
+  .row-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;background:transparent;transition:.2s}
+  .row-status-dot.saving{background:var(--amber);animation:pulse 1s ease-in-out infinite}
+  .row-status-dot.ok{background:var(--green)}
+  .row-status-dot.err{background:var(--rose)}
+
   /* Batches strip */
   .batches-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
   .batches-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -313,6 +372,18 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
       <div class="card">
         <div class="card-head">
           <strong id="prepTitle">Available bunches (pending dispatch)</strong>
+          <div class="rpwrap">
+            <button class="rpbtn" id="rpToggle" title="Filter by series range">&#9776; Range Filter</button>
+            <div class="rppanel" id="rpPanel">
+              <div class="rphead"><input type="text" id="rpSearch" placeholder="Search ranges (e.g. 100501)"></div>
+              <div class="rplist" id="rpList"></div>
+              <div class="rpfoot">
+                <button id="rpClear">Clear</button>
+                <button class="primary" id="rpApply">Apply</button>
+              </div>
+            </div>
+          </div>
+          <span id="rfChipHost"></span>
           <div class="head-actions">
             <div class="filter-bar">
               <span class="lbl">View</span>
@@ -328,6 +399,17 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
             <button class="btn" id="dl-all" title="Download all data">&#8595; All Data</button>
             <button class="btn btn-primary" id="newBatchBtn">+ New Print Batch</button>
           </div>
+        </div>
+        <div class="bulkbar" id="bulkbar">
+          <span class="bb-count"><span id="bb-n">0</span> selected</span>
+          <span class="bb-lbl">Box</span><input id="bb-box" type="text" placeholder="Box #">
+          <span class="bb-lbl">SS</span><input id="bb-ss" type="text" placeholder="SS Name">
+          <span class="bb-lbl">Station</span><input id="bb-station" type="text" placeholder="Station">
+          <span class="bb-lbl">State</span>
+          <select id="bb-state"><option value="">—</option></select>
+          <span class="bb-lbl">Qty</span><input id="bb-qty" type="number" min="0" placeholder="Qty" style="width:80px">
+          <button class="bb-apply" id="bb-apply">Apply to selected</button>
+          <button class="bb-clear" id="bb-clear">Clear selection</button>
         </div>
         <div class="tbl-scroll"><div id="bunchHost"></div></div>
       </div>
@@ -446,7 +528,10 @@ const S={bunches:[],batches:[],stats:null,filterStatus:'available',filterBatchId
   filt:{from:'',to:'',dateCol:'dispatch_date',state:'',ss:''},
   stationMode:'master',
   drillState:'',drillStation:'',
-  allBunches:[] /* full unfiltered list for dashboard */
+  allBunches:[], /* full unfiltered list for dashboard */
+  /* prepare-tab interactions */
+  selected:new Set(),
+  rangeFilter:new Set() /* ids in this set = visible. empty = no range filter */
 };
 
 document.getElementById('yr').textContent=new Date().getFullYear();
@@ -626,43 +711,65 @@ document.getElementById('newBatchBtn').onclick=()=>{
 
 function stateOpts(sel){return STATES.map(s=>'<option value="'+s+'"'+(sel===s?' selected':'')+'>'+s+'</option>').join('');}
 
+function visibleBunches(){
+  /* applies range filter (if any) on top of current S.bunches */
+  if(!S.rangeFilter.size) return S.bunches;
+  return S.bunches.filter(b=>S.rangeFilter.has(b.id));
+}
+
 function renderBunches(){
   const titleMap={available:'Available bunches (pending dispatch)',dispatched:'Dispatched bunches',missing:'Missing bunches',all:'All bunches'};
-  document.getElementById('prepTitle').textContent=titleMap[S.filterStatus]+' ('+S.bunches.length+')';
-  if(!S.bunches.length){
+  const rows=visibleBunches();
+  const baseTitle=titleMap[S.filterStatus]||'Bunches';
+  document.getElementById('prepTitle').textContent=baseTitle+' ('+rows.length+(S.rangeFilter.size?' of '+S.bunches.length:'')+')';
+
+  /* range filter chip */
+  const chipHost=document.getElementById('rfChipHost');
+  if(S.rangeFilter.size){
+    chipHost.innerHTML='<span class="rfchip">Range filter: '+S.rangeFilter.size+' selected<button id="rfClearChip">&times;</button></span>';
+    document.getElementById('rfClearChip').onclick=()=>{S.rangeFilter.clear();renderBunches();updateRpButton();};
+  } else chipHost.innerHTML='';
+  updateRpButton();
+
+  if(!rows.length){
     document.getElementById('bunchHost').innerHTML='<div class="empty">No bunches to show. Click <b>+ New Print Batch</b> to start.</div>';
+    syncBulkBar();
     return;
   }
+  const allChecked = rows.every(b=>S.selected.has(b.id));
   const head='<tr>'+
+    '<th class="cb-cell"><input type="checkbox" id="cb-all"'+(allChecked?' checked':'')+'></th>'+
     '<th title="Click to mark received (\u2713) / missing (\u2717) / unmarked">Status</th>'+
     '<th>Start Series</th><th>End Series</th><th class="num">Count</th>'+
     '<th>Box No</th><th>SS Name</th><th>Allotted Station</th>'+
     '<th>State</th><th>Dispatch Date</th><th class="num">Dispatch Qty</th>'+
     '<th>Last Updated</th><th></th></tr>';
-  const body=S.bunches.map(b=>{
+  const body=rows.map(b=>{
     const dispatched=b.status==='dispatched';
     const lockedForUser=dispatched && !IS_ADMIN;
     const lockCls=lockedForUser?'locked':'';
+    const isChecked=S.selected.has(b.id);
     /* status cell content */
     let stCls='stcell',stTxt='';
     if(b.received==='received'){stCls+=' recv';stTxt='\u2713';}
     else if(b.received==='missing'){stCls+=' miss';stTxt='\u2717';}
     const statusCell='<span class="'+stCls+'" data-act="toggle-status" title="Click to cycle: \u2713 received / \u2717 missing / unmarked">'+stTxt+'</span>';
     return '<tr data-id="'+b.id+'">'+
+      '<td class="cb-cell">'+(lockedForUser?'':'<input type="checkbox" data-act="select-row"'+(isChecked?' checked':'')+'>')+'</td>'+
       '<td>'+statusCell+'</td>'+
       '<td class="ser">'+b.start_series+'</td>'+
       '<td class="ser">'+b.end_series+'</td>'+
       '<td class="num">'+fmtN(b.qty)+'</td>'+
-      '<td class="'+lockCls+'"><input data-f="box_no" type="text" value="'+escapeHTML(b.box_no)+'" '+(lockedForUser?'disabled':'')+' placeholder="Box #"></td>'+
-      '<td class="'+lockCls+'"><input data-f="ss_name" type="text" value="'+escapeHTML(b.ss_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="SS / Sales staff"></td>'+
-      '<td class="'+lockCls+'"><input data-f="allotted_station_name" type="text" value="'+escapeHTML(b.allotted_station_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="Station"></td>'+
-      '<td class="'+lockCls+'"><select data-f="state" '+(lockedForUser?'disabled':'')+'><option value="">—</option>'+stateOpts(b.state)+'</select></td>'+
+      '<td class="'+lockCls+'"><input data-f="box_no" data-auto="1" type="text" value="'+escapeHTML(b.box_no)+'" '+(lockedForUser?'disabled':'')+' placeholder="Box #"></td>'+
+      '<td class="'+lockCls+'"><input data-f="ss_name" data-auto="1" type="text" value="'+escapeHTML(b.ss_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="SS / Sales staff"></td>'+
+      '<td class="'+lockCls+'"><input data-f="allotted_station_name" data-auto="1" type="text" value="'+escapeHTML(b.allotted_station_name)+'" '+(lockedForUser?'disabled':'')+' placeholder="Station"></td>'+
+      '<td class="'+lockCls+'"><select data-f="state" data-auto="1" '+(lockedForUser?'disabled':'')+'><option value="">—</option>'+stateOpts(b.state)+'</select></td>'+
       '<td class="'+lockCls+'"><input data-f="dispatch_date" type="date" value="'+(b.dispatch_date||'')+'" '+(lockedForUser?'disabled':'')+'></td>'+
-      '<td class="'+lockCls+' num"><input data-f="total_dispatch_quantity" type="number" min="0" value="'+(b.total_dispatch_quantity==null?'':b.total_dispatch_quantity)+'" '+(lockedForUser?'disabled':'')+' placeholder="Qty"></td>'+
-      '<td class="mono">'+(b.updated_at?fmtDateTime(b.updated_at):'—')+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'</td>'+
+      '<td class="'+lockCls+' num"><input data-f="total_dispatch_quantity" data-auto="1" type="number" min="0" value="'+(b.total_dispatch_quantity==null?'':b.total_dispatch_quantity)+'" '+(lockedForUser?'disabled':'')+' placeholder="Qty"></td>'+
+      '<td class="mono">'+(b.updated_at?fmtDateTime(b.updated_at):'—')+(b.updated_by_name?'<br><span style="font-size:10.5px;color:var(--soft)">by '+escapeHTML(b.updated_by_name)+'</span>':'')+'<span class="row-status-dot" data-role="rsd"></span></td>'+
       '<td style="white-space:nowrap;text-align:right">'+
         (lockedForUser?'<span class="chip dp">Locked</span>':
-          '<button class="btn btn-sm" data-act="save">Save</button>'+
+          '<button class="btn btn-sm" data-act="save" title="Save Date (and all changes)">Save Date</button>'+
           (dispatched?' <button class="btn btn-sm" data-act="reset">Clear</button>':''))+
       '</td>'+
     '</tr>';
@@ -671,6 +778,56 @@ function renderBunches(){
   document.querySelectorAll('button[data-act="save"]').forEach(b=>b.onclick=onSaveRow);
   document.querySelectorAll('button[data-act="reset"]').forEach(b=>b.onclick=onResetRow);
   document.querySelectorAll('[data-act="toggle-status"]').forEach(el=>el.onclick=onToggleStatus);
+
+  /* Auto-save wiring */
+  document.querySelectorAll('input[data-auto="1"]').forEach(el=>{
+    el.addEventListener('blur',onAutoSave);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
+  });
+  document.querySelectorAll('select[data-auto="1"]').forEach(el=>el.addEventListener('change',onAutoSave));
+
+  /* Selection wiring */
+  const cbAll=document.getElementById('cb-all');
+  if(cbAll) cbAll.onchange=()=>{
+    rows.forEach(r=>{if(cbAll.checked)S.selected.add(r.id);else S.selected.delete(r.id);});
+    renderBunches();
+  };
+  document.querySelectorAll('input[data-act="select-row"]').forEach(cb=>cb.onchange=e=>{
+    const id=e.target.closest('tr').dataset.id;
+    if(e.target.checked) S.selected.add(id); else S.selected.delete(id);
+    syncBulkBar();
+  });
+  syncBulkBar();
+}
+
+async function onAutoSave(e){
+  const el=e.target;
+  const tr=el.closest('tr');if(!tr)return;
+  const id=tr.dataset.id;
+  /* Only the row's editable fields */
+  const get=k=>{const node=tr.querySelector('[data-f="'+k+'"]');return node?node.value:'';};
+  /* Skip date column for auto-save — explicit only */
+  const payload={
+    p_bunch_id:id,
+    p_box_no:get('box_no'),
+    p_ss_name:get('ss_name'),
+    p_allotted_station_name:get('allotted_station_name'),
+    p_state:get('state'),
+    p_dispatch_date:get('dispatch_date')||null,
+    p_total_dispatch_quantity:get('total_dispatch_quantity')===''?null:Number(get('total_dispatch_quantity'))
+  };
+  const dot=tr.querySelector('[data-role="rsd"]');if(dot){dot.className='row-status-dot saving';}
+  const {error}=await sb.rpc('qr_update_bunch',payload);
+  if(error){
+    if(dot)dot.className='row-status-dot err';
+    tr.classList.add('save-error');setTimeout(()=>tr.classList.remove('save-error'),1200);
+    toast(error.message,'err');
+    return;
+  }
+  if(dot)dot.className='row-status-dot ok';
+  tr.classList.add('saved-flash');setTimeout(()=>tr.classList.remove('saved-flash'),900);
+  /* Silent refresh stats + batches behind the scenes (no toast) */
+  loadStats();loadBatches();
 }
 
 async function onToggleStatus(e){
@@ -708,6 +865,119 @@ async function onResetRow(e){
   if(error){toast(error.message,'err');return;}
   toast('Cleared','ok');await loadAll();
 }
+
+/* ============================================================
+   BULK FILL
+   ============================================================ */
+function syncBulkBar(){
+  /* Only show for selected rows that are visible in current view */
+  const visibleIds=new Set(visibleBunches().map(b=>b.id));
+  /* Drop selections that aren't visible anymore */
+  for(const id of Array.from(S.selected)){if(!visibleIds.has(id))S.selected.delete(id);}
+  const n=S.selected.size;
+  const bar=document.getElementById('bulkbar');
+  document.getElementById('bb-n').textContent=n;
+  if(n>0)bar.classList.add('on'); else bar.classList.remove('on');
+  /* Populate state dropdown once */
+  const stSel=document.getElementById('bb-state');
+  if(stSel.options.length<=1){STATES.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;stSel.appendChild(o);});}
+}
+document.getElementById('bb-clear').onclick=()=>{S.selected.clear();renderBunches();};
+document.getElementById('bb-apply').onclick=async()=>{
+  if(!S.selected.size){toast('No rows selected','err');return;}
+  const fill={
+    box_no:document.getElementById('bb-box').value.trim(),
+    ss_name:document.getElementById('bb-ss').value.trim(),
+    allotted_station_name:document.getElementById('bb-station').value.trim(),
+    state:document.getElementById('bb-state').value,
+    total_dispatch_quantity:document.getElementById('bb-qty').value
+  };
+  const hasAny=fill.box_no||fill.ss_name||fill.allotted_station_name||fill.state||fill.total_dispatch_quantity!=='';
+  if(!hasAny){toast('Enter at least one field to apply','err');return;}
+  if(!confirm('Apply these values to '+S.selected.size+' selected bunch(es)?\n\nOnly EMPTY fields will be filled \u2014 existing values won\u2019t be overwritten.'))return;
+
+  const btn=document.getElementById('bb-apply');btn.disabled=true;btn.textContent='Applying…';
+  let ok=0,fail=0;
+  /* Use S.bunches as source of truth for current values */
+  const byId=Object.fromEntries(S.bunches.map(b=>[b.id,b]));
+  for(const id of S.selected){
+    const cur=byId[id];if(!cur)continue;
+    const payload={
+      p_bunch_id:id,
+      p_box_no:cur.box_no||fill.box_no||'',
+      p_ss_name:cur.ss_name||fill.ss_name||'',
+      p_allotted_station_name:cur.allotted_station_name||fill.allotted_station_name||'',
+      p_state:cur.state||fill.state||'',
+      p_dispatch_date:cur.dispatch_date||null,
+      p_total_dispatch_quantity:(cur.total_dispatch_quantity!=null && cur.total_dispatch_quantity!=='')?cur.total_dispatch_quantity
+                                : (fill.total_dispatch_quantity===''?null:Number(fill.total_dispatch_quantity))
+    };
+    const {error}=await sb.rpc('qr_update_bunch',payload);
+    if(error)fail++; else ok++;
+  }
+  btn.disabled=false;btn.textContent='Apply to selected';
+  /* Clear the bulk form */
+  ['bb-box','bb-ss','bb-station','bb-qty'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bb-state').value='';
+  S.selected.clear();
+  toast(ok+' updated'+(fail?', '+fail+' failed':''),fail?'err':'ok');
+  await loadAll();
+};
+
+/* ============================================================
+   RANGE PICKER
+   ============================================================ */
+function updateRpButton(){
+  const btn=document.getElementById('rpToggle');
+  if(!btn)return;
+  if(S.rangeFilter.size){btn.classList.add('on');btn.innerHTML='&#9776; Ranges: '+S.rangeFilter.size+' selected';}
+  else{btn.classList.remove('on');btn.innerHTML='&#9776; Range Filter';}
+}
+function renderRpList(){
+  const list=document.getElementById('rpList');
+  const q=document.getElementById('rpSearch').value.trim();
+  const all=S.bunches.slice();
+  const filtered=q?all.filter(b=>String(b.start_series).includes(q)||String(b.end_series).includes(q)):all;
+  if(!filtered.length){list.innerHTML='<div class="rpempty">No ranges match "'+escapeHTML(q)+'"</div>';return;}
+  list.innerHTML=filtered.map(b=>{
+    const sel=S.rangeFilter.has(b.id);
+    let st='av',stTxt='Avail';
+    if(b.status==='dispatched'){st='dp';stTxt='Dispatched';}
+    else if(b.received==='missing'){st='mi';stTxt='Missing';}
+    return '<label class="rpitem '+(sel?'on':'')+'"><input type="checkbox" data-bid="'+b.id+'"'+(sel?' checked':'')+'>'+
+      '<span class="rprange">'+b.start_series+' \u2013 '+b.end_series+'</span>'+
+      '<span class="rpstat '+st+'">'+stTxt+'</span></label>';
+  }).join('');
+  /* Wire checkboxes — pending state */
+  list.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.onchange=()=>{
+      const bid=cb.dataset.bid;
+      if(cb.checked) S.rangeFilter.add(bid); else S.rangeFilter.delete(bid);
+      cb.closest('.rpitem').classList.toggle('on',cb.checked);
+    };
+  });
+}
+document.getElementById('rpToggle').onclick=e=>{
+  e.stopPropagation();
+  const p=document.getElementById('rpPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open'))renderRpList();
+};
+document.addEventListener('click',e=>{
+  const p=document.getElementById('rpPanel');
+  if(!p||!p.classList.contains('open'))return;
+  if(p.contains(e.target)||document.getElementById('rpToggle').contains(e.target))return;
+  p.classList.remove('open');
+});
+document.getElementById('rpSearch').oninput=renderRpList;
+document.getElementById('rpClear').onclick=()=>{
+  S.rangeFilter.clear();renderRpList();updateRpButton();renderBunches();
+};
+document.getElementById('rpApply').onclick=()=>{
+  document.getElementById('rpPanel').classList.remove('open');
+  renderBunches();updateRpButton();
+};
+
 
 /* ============================================================
    DASHBOARD VIEW
