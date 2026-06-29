@@ -17,8 +17,16 @@
 (function () {
   'use strict';
 
+  /* ---------- Script-scope resolvers (admin.html declares these as const) ---------- */
+  function getSb()            { try { return sb; } catch (e) { return undefined; } }
+  function getS()             { try { return S;  } catch (e) { return undefined; } }
+  function getEditingUserId() { try { return editingUserId; } catch (e) { return undefined; } }
+  function getLoadUsers()     { try { return loadUsers; } catch (e) { return undefined; } }
+  function getRenderStats()   { try { return renderStats; } catch (e) { return undefined; } }
+  function getRender()        { try { return render; } catch (e) { return undefined; } }
+
   function whenReady(cb) {
-    if (window.sb && document.getElementById('edit-modal')) cb();
+    if (getSb() && document.getElementById('edit-modal')) cb();
     else setTimeout(() => whenReady(cb), 250);
   }
 
@@ -31,10 +39,11 @@
     if (!host) return;
     const mo = new MutationObserver(() => {
       try {
-        if (!window.S || !window.S.users) return;
+        const S_ref = getS();
+        if (!S_ref || !S_ref.users) return;
         host.querySelectorAll('[data-edit]').forEach(btn => {
           const uid = btn.dataset.edit;
-          const u = window.S.users.find(x => x.id === uid);
+          const u = S_ref.users.find(x => x.id === uid);
           if (!u) return;
           const isAdmin = u.role === 'admin';
           const hasMaster = isAdmin || (u.permissions && u.permissions.master_upload === true);
@@ -90,9 +99,10 @@
       const cb = document.getElementById('perm-master');
       if (!cb) return;
       /* Read the current editingUserId from window scope */
-      const uid = window.editingUserId;
-      if (!uid || !window.S || !window.S.users) return;
-      const u = window.S.users.find(x => x.id === uid);
+      const uid = getEditingUserId();
+      const S_ref = getS();
+      if (!uid || !S_ref || !S_ref.users) return;
+      const u = S_ref.users.find(x => x.id === uid);
       if (!u) return;
       const isAdmin = u.role === 'admin';
       cb.checked = isAdmin || (u.permissions && u.permissions.master_upload === true);
@@ -115,19 +125,26 @@
       const cb = document.getElementById('perm-master');
       const intendedValue = cb ? cb.checked : null;
       const adminLocked = cb ? cb.dataset.adminLocked === '1' : false;
-      const uid = window.editingUserId;
+      const uid = getEditingUserId();
       /* Run original (it sets profile + QR perm + maybe password, then re-loads) */
       if (typeof original === 'function') { await original.call(this, ev); }
       /* Then write master_upload separately (skip for admins) */
       if (!adminLocked && uid && cb && intendedValue !== null) {
         try {
-          const { error } = await window.sb.rpc('admin_set_permission', {
+          const { error } = await getSb().rpc('admin_set_permission', {
             p_user_id: uid,
             p_key: 'master_upload',
             p_value: intendedValue
           });
           if (error) console.warn('[admin-master-perm] save error:', error.message);
-          else if (window.loadUsers) { await window.loadUsers(); window.renderStats && window.renderStats(); window.render && window.render(); }
+          else {
+            const lu = getLoadUsers();
+            if (typeof lu === 'function') {
+              await lu();
+              const rs = getRenderStats(); if (typeof rs === 'function') rs();
+              const r  = getRender();      if (typeof r === 'function') r();
+            }
+          }
         } catch (e) { console.warn('[admin-master-perm] save exception:', e); }
       }
     };

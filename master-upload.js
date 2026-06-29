@@ -17,9 +17,19 @@
 (function () {
   'use strict';
 
+  /* ---------- Resolve script-scope `sb` and `MASTER` (declared as const in ble-report.html) ---------- */
+  /* Classic <script> top-level const/let don't attach to window, but they live in the shared    */
+  /* script scope, so a bare-identifier lookup from this IIFE walks up and finds them.           */
+  function getSb() {
+    try { return sb; } catch (e) { return undefined; }
+  }
+  function getMaster() {
+    try { return MASTER; } catch (e) { return undefined; }
+  }
+
   /* ---------- Wait for the page + supabase client to be ready ---------- */
   function whenReady(cb) {
-    if (window.sb && window.MASTER && document.getElementById('userbox')) {
+    if (getSb() && getMaster() && document.getElementById('userbox')) {
       cb();
     } else {
       setTimeout(() => whenReady(cb), 200);
@@ -139,7 +149,7 @@
   let currentVersionInfo = null;
   async function loadDBMaster() {
     try {
-      const { data, error } = await window.sb.rpc('master_get_current');
+      const { data, error } = await getSb().rpc('master_get_current');
       if (error) { console.warn('[master-upload] master_get_current error:', error.message); return; }
       if (!data || !data.length) {
         console.log('[master-upload] No DB master yet — using embedded fallback.');
@@ -154,15 +164,30 @@
         uploaded_by_name: data[0].uploaded_by_name,
         total_stations: data[0].total_stations
       };
-      window.MASTER = newMaster;
-      console.log('[master-upload] Swapped MASTER with DB version:', keys.length, 'stations, uploaded', currentVersionInfo.uploaded_at);
-      /* If reports were already generated, re-run the pipeline so BLE/Iso flags refresh */
+      /* MASTER is declared as `const` in ble-report.html, so we can't reassign the binding.   */
+      /* Mutate the object contents in place: wipe existing keys, then copy new ones over.    */
+      const M = getMaster();
+      if (M && typeof M === 'object') {
+        Object.keys(M).forEach(k => { delete M[k]; });
+        Object.keys(newMaster).forEach(k => { M[k] = newMaster[k]; });
+      }
+      try { window.MASTER = M; } catch (e) {}  /* mirror for any consumer that uses window.MASTER */
+      console.log('[master-upload] Swapped MASTER contents with DB version:', keys.length, 'stations, uploaded', currentVersionInfo.uploaded_at);
+      /* If reports were already generated, re-run the pipeline so BLE/Iso flags refresh.       */
+      /* These helpers are also script-scope consts — try bare-identifier lookups, swallow any  */
+      /* failure (user can just regenerate their report to see updated values).                 */
       try {
-        if (window.S && window.S.txn && window.S.cust) {
-          window.S.final = window.buildFinal(window.S.txn, window.S.cust);
-          window.S.state = window.buildState(window.S.final);
-          window.renderStats && window.renderStats();
-          window.render && window.render();
+        let S_ref, bF, bS, rS, r;
+        try { S_ref = S; } catch (e) {}
+        try { bF = buildFinal; } catch (e) {}
+        try { bS = buildState; } catch (e) {}
+        try { rS = renderStats; } catch (e) {}
+        try { r = render; } catch (e) {}
+        if (S_ref && S_ref.txn && S_ref.cust && typeof bF === 'function') {
+          S_ref.final = bF(S_ref.txn, S_ref.cust);
+          if (typeof bS === 'function') S_ref.state = bS(S_ref.final);
+          if (typeof rS === 'function') rS();
+          if (typeof r === 'function') r();
         }
       } catch (e) { console.warn('[master-upload] re-render after swap failed:', e); }
       updateIndicator();
@@ -189,7 +214,7 @@
   /* ---------- Permission check ---------- */
   async function hasMasterUploadPerm() {
     try {
-      const { data, error } = await window.sb.rpc('has_permission', { p_key: 'master_upload' });
+      const { data, error } = await getSb().rpc('has_permission', { p_key: 'master_upload' });
       if (error) { console.warn('[master-upload] has_permission error:', error.message); return false; }
       return !!data;
     } catch (e) { return false; }
@@ -357,7 +382,7 @@
       const raw = await readXlsx(file);
       const parsed = parseRows(raw);
       btn.innerHTML = '<span class="mu-spinner"></span>Comparing with current…';
-      const { data, error } = await window.sb.rpc('master_upload_version', {
+      const { data, error } = await getSb().rpc('master_upload_version', {
         p_filename: file.name,
         p_rows: parsed
       });
@@ -382,7 +407,7 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="mu-spinner"></span>Activating…';
     try {
-      const { error } = await window.sb.rpc('activate_master_upload', { p_upload_id: uploadId });
+      const { error } = await getSb().rpc('activate_master_upload', { p_upload_id: uploadId });
       if (error) throw error;
       toast('Master activated. Refreshing data…', 'ok');
       bg.classList.remove('open');
@@ -465,7 +490,7 @@
   }
   async function loadHistory(bg) {
     const body = bg.querySelector('#mu-hist-body');
-    const { data, error } = await window.sb.rpc('master_list_versions');
+    const { data, error } = await getSb().rpc('master_list_versions');
     if (error) { body.innerHTML = '<div class="mu-msg err">' + esc(error.message) + '</div>'; return; }
     if (!data || !data.length) {
       body.innerHTML = '<div class="mu-msg info">No master versions yet. The current dashboard is using the embedded fallback.</div>';
@@ -494,7 +519,7 @@
   async function rollback(bg, uploadId) {
     if (!confirm('Restore this version as the active master? The current version stays in history.')) return;
     try {
-      const { error } = await window.sb.rpc('activate_master_upload', { p_upload_id: uploadId });
+      const { error } = await getSb().rpc('activate_master_upload', { p_upload_id: uploadId });
       if (error) throw error;
       toast('Restored. Refreshing master…', 'ok');
       setTimeout(async () => {
