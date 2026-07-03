@@ -389,8 +389,9 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
             <div class="filter-bar">
               <span class="lbl">View</span>
               <select id="statusFilter">
-                <option value="all">All</option>
-                <option value="available" selected>Available</option>
+                <option value="all" selected>All</option>
+                <option value="unmarked">Unverified</option>
+                <option value="available">Available (&#10003;)</option>
                 <option value="dispatched">Dispatched</option>
                 <option value="missing">Missing</option>
               </select>
@@ -531,7 +532,7 @@ if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL){
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const STATES=['TN','RAJ','AP/TL','MP','MH','WB','KAR'];
 let CURRENT_USER=null,CURRENT_PROFILE=null,IS_ADMIN=false;
-const S={bunches:[],batches:[],stats:null,filterStatus:'available',filterBatchId:null,editingBatchId:null,
+const S={bunches:[],batches:[],stats:null,filterStatus:'all',filterBatchId:null,editingBatchId:null,
   /* dashboard filters */
   filt:{from:'',to:'',dateCol:'dispatch_date',state:'',ss:''},
   stationMode:'master',
@@ -628,6 +629,7 @@ function renderBatches(){
         '<span class="a">Avail <b>'+b.total_available+'</b></span>'+
         '<span class="g">Disp <b>'+b.total_dispatched+'</b></span>'+
         '<span class="m">Miss <b>'+b.total_missing+'</b></span>'+
+        ((b.total_unmarked||0)>0?'<span style="color:var(--blue)">Unv <b>'+b.total_unmarked+'</b></span>':'')+
       '</div>'+
       '<div class="bactions">'+
         '<button class="ba-btn view '+(active?'on':'')+'" data-act="view-batch">'+(active?'\u2713 Viewing':'View')+'</button>'+
@@ -696,11 +698,12 @@ async function onDeleteBatch(bid){
 }
 
 function renderStats(){
-  const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_missing:0,total_received:0,total_qty_available:0,total_qty_dispatched:0,total_qty_missing:0,total_batches:0};
+  const s=S.stats||{total_bunches:0,total_available:0,total_dispatched:0,total_missing:0,total_received:0,total_unmarked:0,total_qty_available:0,total_qty_dispatched:0,total_qty_missing:0,total_qty_unmarked:0,total_batches:0};
   const cards=[
     ['&#128230;','Print Batches',s.total_batches,'r-purple'],
     ['&#128220;','Total Bunches',s.total_bunches,'r-blue'],
-    ['&#9203;','Available',s.total_available,'r-amber'],
+    ['&#10067;','Unverified',(s.total_unmarked||0),'r-blue'],
+    ['&#9203;','Available (&#10003;)',s.total_available,'r-amber'],
     ['&#9989;','Dispatched',s.total_dispatched,'r-green'],
     ['&#10060;','Missing',s.total_missing,'r-rose'],
     ['&#128202;','QR Codes Available',fmtN(s.total_qty_available),'r-amber'],
@@ -726,7 +729,7 @@ function visibleBunches(){
 }
 
 function renderBunches(){
-  const titleMap={available:'Available bunches (pending dispatch)',dispatched:'Dispatched bunches',missing:'Missing bunches',all:'All bunches'};
+  const titleMap={available:'Available bunches (\u2713 received, pending dispatch)',unmarked:'Unverified bunches (not yet checked)',dispatched:'Dispatched bunches',missing:'Missing bunches',all:'All bunches'};
   const rows=visibleBunches();
   const baseTitle=titleMap[S.filterStatus]||'Bunches';
   document.getElementById('prepTitle').textContent=baseTitle+' ('+rows.length+(S.rangeFilter.size?' of '+S.bunches.length:'')+')';
@@ -788,7 +791,11 @@ function renderBunches(){
   document.getElementById('bunchHost').innerHTML='<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
   document.querySelectorAll('button[data-act="save"]').forEach(b=>b.onclick=onSaveRow);
   document.querySelectorAll('button[data-act="reset"]').forEach(b=>b.onclick=onResetRow);
-  document.querySelectorAll('[data-act="toggle-status"]').forEach(el=>el.onclick=onToggleStatus);
+  document.querySelectorAll('[data-act="toggle-status"]').forEach(el=>{
+    el.onclick=onToggleStatus;
+    /* Right-click also toggles (suppress browser context menu on this cell) */
+    el.oncontextmenu=function(e){e.preventDefault();onToggleStatus({currentTarget:el});return false;};
+  });
 
   /* Auto-save wiring */
   document.querySelectorAll('input[data-auto="1"]').forEach(el=>{
@@ -844,11 +851,21 @@ async function onAutoSave(e){
 
 async function onToggleStatus(e){
   const cell=e.currentTarget;const tr=cell.closest('tr');const id=tr.dataset.id;
+  if(cell.classList.contains('busy'))return; /* guard double-fire */
   cell.classList.add('busy');
   const {data,error}=await sb.rpc('qr_toggle_received',{p_bunch_id:id});
-  if(error){toast(error.message,'err');cell.classList.remove('busy');return;}
-  /* Re-load to keep stats + filter view consistent */
-  await loadAll();
+  cell.classList.remove('busy');
+  if(error){toast(error.message,'err');return;}
+  /* Update the cell in place from the RPC's returned new value (no full re-render, keeps scroll) */
+  const rec=(typeof data==='string')?(data||null):null;
+  const b=S.bunches.find(x=>x.id===id);if(b)b.received=rec;
+  if(rec==='received'){cell.className='stcell recv';cell.textContent='\u2713';}
+  else if(rec==='missing'){cell.className='stcell miss';cell.textContent='\u2717';}
+  else{cell.className='stcell';cell.textContent='';}
+  /* Silent background refresh of stats + batch cards so the top dashboard reacts immediately */
+  loadStats();loadBatches();
+  /* If a status filter is active, this row may no longer belong in the view — refresh list quietly */
+  if(S.filterStatus!=='all'){loadBunches();}
 }
 
 async function onSaveRow(e){
@@ -990,6 +1007,7 @@ function renderRpList(){
     let st='av',stTxt='Avail';
     if(b.status==='dispatched'){st='dp';stTxt='Dispatched';}
     else if(b.received==='missing'){st='mi';stTxt='Missing';}
+    else if(b.received!=='received'){st='av';stTxt='Unverified';}
     return '<label class="rpitem '+(sel?'on':'')+'"><input type="checkbox" data-bid="'+b.id+'"'+(sel?' checked':'')+'>'+
       '<span class="rprange">'+b.start_series+' \u2013 '+b.end_series+'</span>'+
       '<span class="rpstat '+st+'">'+stTxt+'</span></label>';
@@ -1062,7 +1080,7 @@ function renderDashboard(){
   /* CARDS */
   const totalQty=rows.reduce((a,b)=>a+(b.qty||0),0);
   const dispRows=rows.filter(r=>r.status==='dispatched');
-  const availRows=rows.filter(r=>r.status==='available' && (!r.received||r.received==='received'));
+  const availRows=rows.filter(r=>r.status==='available' && r.received==='received');
   const missingRows=rows.filter(r=>r.received==='missing');
   const dispStations=new Set(dispRows.map(r=>r.allotted_station_name).filter(Boolean));
   const dispQty=dispRows.reduce((a,b)=>a+(b.qty||0),0);
@@ -1212,7 +1230,8 @@ function renderDetailTable(rows){
     let chip='';
     if(r.status==='dispatched') chip='<span class="chip dp">Dispatched</span>';
     else if(r.received==='missing') chip='<span class="chip" style="background:rgba(242,78,110,.14);color:var(--rose)">Missing</span>';
-    else chip='<span class="chip av">Available</span>';
+    else if(r.received==='received') chip='<span class="chip av">Available</span>';
+    else chip='<span class="chip" style="background:rgba(47,107,255,.12);color:var(--blue)">Unverified</span>';
     return '<tr>'+
       '<td>'+chip+'</td>'+
       '<td>'+escapeHTML(r.state||'\u2014')+'</td>'+
@@ -1297,7 +1316,7 @@ document.getElementById('dash-dl-excel').onclick=()=>{
     'Start Series':r.start_series,
     'End Series':r.end_series,
     'Qty':r.qty,
-    'Status': r.status==='dispatched'?'Dispatched':r.received==='missing'?'Missing':'Available',
+    'Status': r.status==='dispatched'?'Dispatched':r.received==='missing'?'Missing':r.received==='received'?'Available':'Unverified',
     'Received Mark':r.received==='received'?'Yes':r.received==='missing'?'Missing':'',
     'Dispatch Date':r.dispatch_date||'',
     'Updated':r.updated_at?new Date(r.updated_at).toLocaleString('en-IN'):'',
@@ -1342,7 +1361,7 @@ document.getElementById('b-create').onclick=async()=>{
   const btn=document.getElementById('b-create');btn.disabled=true;btn.textContent='Creating…';
   const {error}=await sb.rpc('qr_create_batch',{p_print_start:start,p_print_end:end,p_bunch_size:size,p_notes:notes||null});
   if(error){msg.className='msg err';msg.textContent=error.message;btn.disabled=false;btn.textContent='Create Batch';return;}
-  closeModal('batch-modal');toast('Batch created','ok');S.filterStatus='available';document.getElementById('statusFilter').value='available';
+  closeModal('batch-modal');toast('Batch created \u2014 tick \u2713 bunches as you verify the parcel','ok');S.filterStatus='unmarked';document.getElementById('statusFilter').value='unmarked';
   await loadAll();btn.disabled=false;btn.textContent='Create Batch';
 };
 
@@ -1358,7 +1377,7 @@ async function fetchFilterAndDownload(filter, sheetName, fileName){
     'End Series':b.end_series,
     'Count':b.qty,
     'Status (Recv/Miss)': b.received==='received'?'Received':b.received==='missing'?'Missing':'',
-    'Dispatch Status': b.status==='dispatched'?'Dispatched':'Available',
+    'Dispatch Status': b.status==='dispatched'?'Dispatched':b.received==='received'?'Available':b.received==='missing'?'Missing':'Unverified',
     'Box No':b.box_no||'',
     'Office Person':b.office_person||'',
     'SS Name':b.ss_name||'',
