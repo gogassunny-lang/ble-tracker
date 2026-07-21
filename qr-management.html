@@ -416,6 +416,7 @@ const STATE_CODE_MAP={"Tamil Nadu":"TN","Karnataka":"KAR","Maharashtra":"MH","Te
           <span class="bb-lbl">Station</span><input id="bb-station" type="text" placeholder="Station" style="width:110px">
           <span class="bb-lbl">State</span>
           <select id="bb-state" style="width:85px"><option value="">—</option></select>
+          <span class="bb-lbl">Date</span><input id="bb-date" type="date" style="width:135px">
           <span class="bb-lbl">Qty</span><input id="bb-qty" type="number" min="0" placeholder="Qty" style="width:75px">
           <button class="bb-apply" id="bb-apply">Apply to selected</button>
           <button class="bb-clear" id="bb-clear">Clear selection</button>
@@ -950,11 +951,14 @@ document.getElementById('bb-apply').onclick=async()=>{
     ss_name:document.getElementById('bb-ss').value.trim(),
     allotted_station_name:document.getElementById('bb-station').value.trim(),
     state:document.getElementById('bb-state').value,
+    dispatch_date:document.getElementById('bb-date').value,
     total_dispatch_quantity:document.getElementById('bb-qty').value
   };
-  const hasAny=fill.box_no||fill.office_person||fill.ss_name||fill.allotted_station_name||fill.state||fill.total_dispatch_quantity!=='';
+  const hasAny=fill.box_no||fill.office_person||fill.ss_name||fill.allotted_station_name||fill.state||fill.dispatch_date||fill.total_dispatch_quantity!=='';
   if(!hasAny){toast('Enter at least one field to apply','err');return;}
-  if(!confirm('Apply these values to '+S.selected.size+' selected bunch(es)?\n\nOnly EMPTY fields will be filled \u2014 existing values won\u2019t be overwritten.'))return;
+  let msg='Apply these values to '+S.selected.size+' selected bunch(es)?\n\nOnly EMPTY fields will be filled \u2014 existing values won\u2019t be overwritten.';
+  if(fill.dispatch_date)msg+='\n\n\u26a0 Setting a dispatch date will mark bunches without one as DISPATCHED.';
+  if(!confirm(msg))return;
 
   const btn=document.getElementById('bb-apply');btn.disabled=true;btn.textContent='Applying…';
   let ok=0,fail=0;
@@ -968,7 +972,7 @@ document.getElementById('bb-apply').onclick=async()=>{
       p_ss_name:cur.ss_name||fill.ss_name||'',
       p_allotted_station_name:cur.allotted_station_name||fill.allotted_station_name||'',
       p_state:cur.state||fill.state||'',
-      p_dispatch_date:cur.dispatch_date||null,
+      p_dispatch_date:cur.dispatch_date||fill.dispatch_date||null,
       p_total_dispatch_quantity:(cur.total_dispatch_quantity!=null && cur.total_dispatch_quantity!=='')?cur.total_dispatch_quantity
                                 : (fill.total_dispatch_quantity===''?null:Number(fill.total_dispatch_quantity)),
       p_office_person:cur.office_person||fill.office_person||''
@@ -978,7 +982,7 @@ document.getElementById('bb-apply').onclick=async()=>{
   }
   btn.disabled=false;btn.textContent='Apply to selected';
   /* Clear the bulk form */
-  ['bb-box','bb-office','bb-ss','bb-station','bb-qty'].forEach(id=>document.getElementById(id).value='');
+  ['bb-box','bb-office','bb-ss','bb-station','bb-qty','bb-date'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bb-state').value='';
   document.getElementById('bb-start-range').value='';
   document.getElementById('bb-end-range').value='';
