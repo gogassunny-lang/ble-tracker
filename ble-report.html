@@ -372,6 +372,7 @@ function buildColDefs(hasCamp){
       .concat(reg)
       .concat([{k:'ble',l:'BLE Installed'},{k:'iso',l:'Isolator'}]),
     state:[{k:'state',l:'State',lock:true},{k:'stations',l:'Stations'},
+      {k:'present',l:'Present Station Count'},
       {k:'bleScheme',l:'BLE Scheme Station'},{k:'nonScheme',l:'Non BLE Scheme Stations'},
       {k:'vol',l:'Volume (L)'},
       {k:'txn',l:'Device / Txn Total'},{k:'mob',l:'Mobile No Count'},
@@ -388,7 +389,7 @@ let COLS=buildColDefs(false);
 const VISIBLE={};
 function initVisible(){Object.keys(COLS).forEach(v=>{VISIBLE[v]={};COLS[v].forEach(c=>VISIBLE[v][c.k]=true);});}
 initVisible();
-const NUMK=['vol','txn','mob','custMob','pct','mdpct','reg','count','stations','bleScheme','nonScheme','ble_installed','iso_installed'];
+const NUMK=['vol','txn','mob','custMob','pct','mdpct','reg','count','stations','present','bleScheme','nonScheme','ble_installed','iso_installed'];
 const SORT={};const FILT={};
 Object.keys(COLS).forEach(v=>{SORT[v]=null;FILT[v]={};});
 
@@ -521,8 +522,8 @@ function buildFinal(txn,cust,camp){const cmap={};cust.forEach(c=>cmap[norm(c.sta
   else S.custUnmatched=null;
   rows.sort((a,b)=>b.pct-a.pct||b.txn-a.txn);return rows;}
 function buildState(final){const map={};
-  final.forEach(r=>{const k=r.state||'Unknown';if(!map[k])map[k]={state:k,stations:0,vol:0,txn:0,mob:0,custMob:0,reg:0,ble_installed:0,iso_installed:0,children:[]};
-    const m=map[k];m.stations++;m.vol+=(r.vol||0);m.txn+=r.txn;m.mob+=r.mob;m.custMob+=r.custMob;m.reg+=(r.reg||0);
+  final.forEach(r=>{const k=r.state||'Unknown';if(!map[k])map[k]={state:k,stations:0,present:0,vol:0,txn:0,mob:0,custMob:0,reg:0,ble_installed:0,iso_installed:0,children:[]};
+    const m=map[k];m.stations++;if(r.txn>0)m.present++;m.vol+=(r.vol||0);m.txn+=r.txn;m.mob+=r.mob;m.custMob+=r.custMob;m.reg+=(r.reg||0);
     if(r.ble==='Y')m.ble_installed++;if(r.iso==='Y')m.iso_installed++;m.children.push(r);});
   const arr=Object.values(map);arr.forEach(s=>{s.pct=s.txn>0?(s.custMob/s.txn*100):0;
     s.mdpct=s.txn>0?(s.mob/s.txn*100):0;
@@ -562,7 +563,7 @@ async function syncReportToSupabase(){try{if(!CURRENT_USER||!S.final)return;
   const payload={user_id:CURRENT_USER.id,station_count:S.final.length,txn_total:totTxn,
     ble_mapped:totMob,ble_pct:ble_pct,customer_txn_total:totCust,state_count:S.state.length,
     data_final:S.final,
-    data_state:S.state.map(s=>({state:s.state,stations:s.stations,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,ble_installed:s.ble_installed,iso_installed:s.iso_installed})),
+    data_state:S.state.map(s=>({state:s.state,stations:s.stations,present:s.present,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,ble_installed:s.ble_installed,iso_installed:s.iso_installed})),
     data_txn:S.txn,data_cust:S.cust};
   const {error}=await sb.from('reports').insert(payload);
   if(error){console.warn('Report sync failed:',error.message);}else{console.log('Report synced');}
@@ -598,6 +599,7 @@ function cell(row,k,ctx){
   if(k==='station')return '<td class="stn">'+row.station+'</td>';
   if(k==='state')return '<td><span class="state-chip">'+(row.state||'\u2014')+'</span></td>';
   if(k==='stations')return '<td class="num">'+fmt(row.stations)+'</td>';
+  if(k==='present')return '<td class="num">'+fmt(row.present||0)+'</td>';
   if(k==='bleScheme')return '<td class="num">'+fmt(row.bleScheme||0)+'</td>';
   if(k==='nonScheme')return '<td class="num">'+fmt(row.nonScheme||0)+'</td>';
   if(k==='count')return '<td class="num">'+fmt(row.count)+'</td>';
@@ -627,7 +629,7 @@ function headRow(extraLead){const cols=activeCols();const interactive=true;let h
 function rawVal(row,k){
   if(k==='pct')return row.pct;
   if(k==='mdpct')return row.mdpct||0;
-  if(['vol','reg','txn','mob','custMob','count','stations','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k))return row[k]||0;
+  if(['vol','reg','txn','mob','custMob','count','stations','present','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k))return row[k]||0;
   if(k==='state')return row.state||'';
   if(k==='name')return row.name||'';
   if(k==='station')return row.station||'';
@@ -635,7 +637,7 @@ function rawVal(row,k){
   if(k==='ble'||k==='iso'){const v=row[k];if(v==='Y')return 'Yes';if(v==='N')return 'No';return '-';}
   return row[k]!==undefined?row[k]:'';}
 function subtotalRow(rows){const cols=activeCols();
-  const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
+  const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,present:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
   let bleY=0,bleN=0,bleU=0,isoY=0,isoN=0,isoU=0;const states=new Set();
   rows.forEach(r=>{if(r._type==='STATE'){return;}
     Object.keys(sums).forEach(k=>{if(typeof r[k]==='number')sums[k]+=r[k];});
@@ -657,6 +659,7 @@ function subtotalRow(rows){const cols=activeCols();
     if(k==='reg'){tds+='<td class="num">'+fmt(sums.reg)+'</td>';return;}
     if(k==='count'){tds+='<td class="num">'+fmt(sums.count)+'</td>';return;}
     if(k==='stations'){tds+='<td class="num">'+fmt(sums.stations)+'</td>';return;}
+    if(k==='present'){tds+='<td class="num">'+fmt(sums.present)+'</td>';return;}
     if(k==='bleScheme'){tds+='<td class="num">'+fmt(sums.bleScheme)+'</td>';return;}
     if(k==='nonScheme'){tds+='<td class="num">'+fmt(sums.nonScheme)+'</td>';return;}
     if(k==='pct'){tds+='<td class="num"><span class="pill '+pclass(weightedPct)+'">'+weightedPct.toFixed(1)+'%</span></td>';return;}
@@ -701,7 +704,7 @@ function render(){renderColPicker();
           let cr='<tr class="childrow">';
           cols.forEach(c=>{
             if(c.k==='state'){cr+='<td><span class="stname" style="padding-left:24px"><span class="erp">'+ch.erp+'</span> &nbsp; <span class="stn">'+ch.name+'</span></span></td>';}
-            else if(c.k==='stations'||c.k==='bleScheme'||c.k==='nonScheme'){cr+='<td class="num">\u2014</td>';}
+            else if(c.k==='stations'||c.k==='present'||c.k==='bleScheme'||c.k==='nonScheme'){cr+='<td class="num">\u2014</td>';}
             else cr+=cell(ch,c.k,{max:max});});
           cr+='</tr>';rows+=cr;});}});
     const subt=subtotalRow(filt.map(s=>Object.assign({},s,{ble:'',iso:''})));
@@ -772,7 +775,7 @@ function valOf(row,k){if(k==='pct')return row.pct.toFixed(1)+'%';
 function filteredRows(){const q=norm(document.getElementById('search').value);
   if(S.cur==='state'){const out=[];
     S.state.filter(s=>!q||norm(s.state).includes(q)||s.children.some(c=>norm(c.name).includes(q)||norm(c.erp).includes(q))).forEach(s=>{
-      out.push({_type:'STATE',state:s.state,stations:s.stations,bleScheme:s.bleScheme,nonScheme:s.nonScheme,vol:s.vol,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,mdpct:s.mdpct,reg:s.reg,ble_installed:s.ble_installed,iso_installed:s.iso_installed});
+      out.push({_type:'STATE',state:s.state,stations:s.stations,present:s.present,bleScheme:s.bleScheme,nonScheme:s.nonScheme,vol:s.vol,txn:s.txn,mob:s.mob,custMob:s.custMob,pct:s.pct,mdpct:s.mdpct,reg:s.reg,ble_installed:s.ble_installed,iso_installed:s.iso_installed});
       s.children.filter(c=>!q||norm(c.name).includes(q)||norm(c.erp).includes(q)||norm(s.state).includes(q))
         .forEach(c=>out.push(Object.assign({_type:'  station'},c)));});
     return out;}
@@ -784,16 +787,16 @@ document.getElementById('dl-filtered').onclick=()=>{const cols=activeCols();cons
   const aoa=rows.map(r=>{const o={};
     cols.forEach(c=>{
       if(S.cur==='state'&&c.k==='state'){o['State / Station']=(r._type==='STATE')?r.state:('   '+r.erp+'  '+r.name);return;}
-      if(S.cur==='state'&&(c.k==='stations'||c.k==='bleScheme'||c.k==='nonScheme')&&r._type!=='STATE'){o[c.l]='';return;}
+      if(S.cur==='state'&&(c.k==='stations'||c.k==='present'||c.k==='bleScheme'||c.k==='nonScheme')&&r._type!=='STATE'){o[c.l]='';return;}
       o[c.l]=valOf(r,c.k);});return o;});
   if(aoa.length){const base=rows.filter(r=>S.cur!=='state'?true:r._type==='STATE');
-    const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
+    const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,present:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
     base.forEach(r=>Object.keys(sums).forEach(k=>{if(typeof r[k]==='number')sums[k]+=r[k];}));
     const wPct=sums.txn>0?(sums.custMob/sums.txn*100):0;const wMd=sums.txn>0?(sums.mob/sums.txn*100):0;
     const tot={};cols.forEach((c,i)=>{const k=c.k;const lbl=(S.cur==='state'&&k==='state')?'State / Station':c.l;
       if(i===0){tot[lbl]='TOTAL';return;}
       if(k==='vol'){tot[lbl]=+sums.vol.toFixed(2);return;}
-      if(['txn','mob','custMob','reg','count','stations','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k)){tot[lbl]=sums[k];return;}
+      if(['txn','mob','custMob','reg','count','stations','present','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k)){tot[lbl]=sums[k];return;}
       if(k==='pct'){tot[lbl]=wPct.toFixed(1)+'%';return;}
       if(k==='mdpct'){tot[lbl]=wMd.toFixed(1)+'%';return;}
       tot[lbl]='';});
@@ -815,10 +818,10 @@ document.getElementById('dl-complete').onclick=()=>{const wb=XLSX.utils.book_new
     if(hasCamp)to['Registered Customer']=sum(S.final,'reg');
     to['BLE Installed']=S.final.filter(r=>r.ble==='Y').length+' / '+S.final.length;to['Isolator']=S.final.filter(r=>r.iso==='Y').length+' / '+S.final.length;f.unshift(to);}
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(f),'Final Comparison');
-  const stt=S.state.map(s=>{const o={State:s.state,Stations:s.stations,'BLE Scheme Station':s.bleScheme||0,'Non BLE Scheme Stations':s.nonScheme||0,'Volume (L)':+((s.vol||0).toFixed(2)),'Device/Txn Total':s.txn,'Mobile No Count':s.mob,'Customer Mobile Total':s.custMob,'BLE %':s.pct.toFixed(1)+'%','Mobile/Device %':(s.mdpct||0).toFixed(1)+'%'};
+  const stt=S.state.map(s=>{const o={State:s.state,Stations:s.stations,'Present Station Count':s.present||0,'BLE Scheme Station':s.bleScheme||0,'Non BLE Scheme Stations':s.nonScheme||0,'Volume (L)':+((s.vol||0).toFixed(2)),'Device/Txn Total':s.txn,'Mobile No Count':s.mob,'Customer Mobile Total':s.custMob,'BLE %':s.pct.toFixed(1)+'%','Mobile/Device %':(s.mdpct||0).toFixed(1)+'%'};
     if(hasCamp)o['Registered Customer']=s.reg||0;
     o['BLE Installed (#)']=s.ble_installed||0;o['Isolator (#)']=s.iso_installed||0;return o;});
-  {const tt=sum(S.state,'txn');const to={State:'TOTAL',Stations:sum(S.state,'stations'),'BLE Scheme Station':sum(S.state,'bleScheme'),'Non BLE Scheme Stations':sum(S.state,'nonScheme'),'Volume (L)':+sum(S.state,'vol').toFixed(2),'Device/Txn Total':tt,'Mobile No Count':sum(S.state,'mob'),'Customer Mobile Total':sum(S.state,'custMob'),'BLE %':(tt?(sum(S.state,'custMob')/tt*100):0).toFixed(1)+'%','Mobile/Device %':(tt?(sum(S.state,'mob')/tt*100):0).toFixed(1)+'%'};
+  {const tt=sum(S.state,'txn');const to={State:'TOTAL',Stations:sum(S.state,'stations'),'Present Station Count':sum(S.state,'present'),'BLE Scheme Station':sum(S.state,'bleScheme'),'Non BLE Scheme Stations':sum(S.state,'nonScheme'),'Volume (L)':+sum(S.state,'vol').toFixed(2),'Device/Txn Total':tt,'Mobile No Count':sum(S.state,'mob'),'Customer Mobile Total':sum(S.state,'custMob'),'BLE %':(tt?(sum(S.state,'custMob')/tt*100):0).toFixed(1)+'%','Mobile/Device %':(tt?(sum(S.state,'mob')/tt*100):0).toFixed(1)+'%'};
     if(hasCamp)to['Registered Customer']=sum(S.state,'reg');
     to['BLE Installed (#)']=sum(S.state,'ble_installed');to['Isolator (#)']=sum(S.state,'iso_installed');stt.unshift(to);}
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(stt),'State Analysis');
@@ -841,7 +844,7 @@ function prCellVal(row,k){
   if(k==='vol')return fmtVol(row.vol||0);
   if(k==='ble')return prYN(row.ble);
   if(k==='iso')return prYN(row.iso);
-  if(['txn','mob','custMob','reg','count','stations','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k))return fmt(row[k]||0);
+  if(['txn','mob','custMob','reg','count','stations','present','bleScheme','nonScheme','ble_installed','iso_installed'].includes(k))return fmt(row[k]||0);
   return prEsc(row[k]!==undefined?row[k]:'');}
 function prTable(title,cols,rows,opts){opts=opts||{};
   let h='<h2>'+prEsc(title)+'</h2><table><thead><tr>';
@@ -852,11 +855,11 @@ function prTable(title,cols,rows,opts){opts=opts||{};
     cols.forEach((c,i)=>{const k=c.k;
       if(r._total&&i===0){h+='<td><b>TOTAL</b></td>';return;}
       if(opts.stateMode&&k==='state'){h+='<td>'+(isState?('<b>'+prEsc(r.state)+'</b>'):('&nbsp;&nbsp;&nbsp;'+prEsc(r.erp)+' &nbsp;'+prEsc(r.name)))+'</td>';return;}
-      if(opts.stateMode&&(k==='stations'||k==='bleScheme'||k==='nonScheme')&&!isState){h+='<td class="num">\u2014</td>';return;}
+      if(opts.stateMode&&(k==='stations'||k==='present'||k==='bleScheme'||k==='nonScheme')&&!isState){h+='<td class="num">\u2014</td>';return;}
       h+='<td class="'+(NUMK.includes(k)?'num':'')+'">'+prCellVal(r,k)+'</td>';});
     h+='</tr>';});
   h+='</tbody></table>';return h;}
-function prTotalRow(rows,tmpl){const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
+function prTotalRow(rows,tmpl){const sums={vol:0,txn:0,mob:0,custMob:0,reg:0,count:0,stations:0,present:0,bleScheme:0,nonScheme:0,ble_installed:0,iso_installed:0};
   const base=rows.filter(r=>r._type!=='STATE');
   base.forEach(r=>Object.keys(sums).forEach(k=>{if(typeof r[k]==='number')sums[k]+=r[k];}));
   const o=Object.assign({_total:true},tmpl||{});
