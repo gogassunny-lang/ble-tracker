@@ -550,7 +550,7 @@ function renderReportTab(){
   const tab=S.currentReportTab;const r=S.currentReport;
   let arr,cols;
   if(tab==='final'){arr=r.data_final||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %'],['ble','BLE Installed'],['iso','Isolator']];}
-  else if(tab==='state'){arr=r.data_state||[];cols=[['state','State'],['stations','Stations'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %'],['ble_installed','BLE Inst (#)'],['iso_installed','Iso (#)']];}
+  else if(tab==='state'){arr=r.data_state||[];cols=[['state','State'],['stations','Stations'],['present','Present Station Count'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %'],['ble_installed','BLE Inst (#)'],['iso_installed','Iso (#)']];}
   else if(tab==='txn'){arr=r.data_txn||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile']];}
   else{arr=r.data_cust||[];cols=[['station','Station'],['state','State'],['count','Mobile Txns']];}
   const numKeys=['txn','mob','custMob','pct','count','stations','ble_installed','iso_installed'];
