@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
+  .vtag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:2px 7px;border-radius:999px;vertical-align:middle}
+  .vtag.v1{background:rgba(47,107,255,.12);color:#2f6bff}
+  .vtag.v2{background:rgba(245,158,11,.15);color:#b45309}
   :root{
     --bg:#f4f6fb;--card:#ffffff;--ink:#10203a;--mut:#6b7a90;--soft:#9aa7ba;
     --line:#e6ebf3;--line2:#eef2f8;
@@ -270,7 +273,7 @@
         <div class="rmtab active" data-rt="final">Final Comparison</div>
         <div class="rmtab" data-rt="state">State Analysis</div>
         <div class="rmtab" data-rt="txn">Transaction Report</div>
-        <div class="rmtab" data-rt="cust">Customer Report</div>
+        <div class="rmtab" data-rt="cust">Customer / Missed Report</div>
       </div>
       <div id="report-body" style="max-height:60vh;overflow:auto"></div>
     </div>
@@ -383,9 +386,11 @@ function renderUsers(q){
 function renderReports(q){
   document.getElementById('tabtitle').textContent='All reports ('+S.reports.length+')';
   const filt=S.reports.filter(r=>!q||norm(r.user_name).includes(q)||norm(r.user_email).includes(q));
-  const head='<tr><th>User</th><th>Generated</th><th class="num">Stations</th><th class="num">Transactions</th><th class="num">BLE Mapped</th><th class="num">BLE %</th><th class="num">States</th><th></th></tr>';
+  const head='<tr><th>User</th><th>Version</th><th>Generated</th><th class="num">Stations</th><th class="num">Transactions</th><th class="num">BLE Mapped</th><th class="num">BLE % / Missed %</th><th class="num">States</th><th></th></tr>';
   const body=filt.map(r=>{
+    const ver=(r.version==='v2')?'v2':'v1';
     return '<tr><td><div class="stn">'+escapeHTML(r.user_name)+'</div><div class="mono">'+escapeHTML(r.user_email)+'</div></td>'+
+      '<td><span class="vtag '+ver+'">'+ver.toUpperCase()+'</span></td>'+
       '<td class="mono">'+fmtDate(r.created_at)+'</td>'+
       '<td class="num">'+fmtN(r.station_count)+'</td>'+
       '<td class="num">'+fmtN(r.txn_total)+'</td>'+
@@ -548,11 +553,13 @@ document.querySelectorAll('.rmtab').forEach(t=>t.onclick=()=>{
 function renderReportTab(){
   if(!S.currentReport)return;
   const tab=S.currentReportTab;const r=S.currentReport;
+  const isV2=(r.version==='v2');
+  const mLbl=isV2?'Missed Txn':'Cust Mobile';const pLbl=isV2?'Missed %':'BLE %';
   let arr,cols;
-  if(tab==='final'){arr=r.data_final||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %'],['ble','BLE Installed'],['iso','Isolator']];}
-  else if(tab==='state'){arr=r.data_state||[];cols=[['state','State'],['stations','Stations'],['present','Present Station Count'],['txn','Device/Txn'],['mob','Mobile'],['custMob','Cust Mobile'],['pct','BLE %'],['ble_installed','BLE Inst (#)'],['iso_installed','Iso (#)']];}
+  if(tab==='final'){arr=r.data_final||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile'],['custMob',mLbl],['pct',pLbl],['ble','BLE Installed'],['iso','Isolator']];}
+  else if(tab==='state'){arr=r.data_state||[];cols=[['state','State'],['stations','Stations'],['present','Present Station Count'],['txn','Device/Txn'],['mob','Mobile'],['custMob',mLbl],['pct',pLbl],['ble_installed','BLE Inst (#)'],['iso_installed','Iso (#)']];}
   else if(tab==='txn'){arr=r.data_txn||[];cols=[['erp','ERP'],['name','Station'],['state','State'],['txn','Device/Txn'],['mob','Mobile']];}
-  else{arr=r.data_cust||[];cols=[['station','Station'],['state','State'],['count','Mobile Txns']];}
+  else{arr=r.data_cust||[];cols=isV2?[['erp','ERP'],['station','Station'],['state','State'],['count','Missed Txns']]:[['station','Station'],['state','State'],['count','Mobile Txns']];}
   const numKeys=['txn','mob','custMob','pct','count','stations','ble_installed','iso_installed'];
   const head='<tr>'+cols.map(c=>'<th class="'+(numKeys.includes(c[0])?'num':'')+'" style="'+(numKeys.includes(c[0])?'text-align:right':'')+'">'+c[1]+'</th>').join('')+'</tr>';
   const body=arr.map(row=>'<tr>'+cols.map(c=>{
@@ -570,7 +577,7 @@ document.getElementById('report-download').onclick=()=>{
   if(r.data_final?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_final),'Final');
   if(r.data_state?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_state),'State');
   if(r.data_txn?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_txn),'Transaction');
-  if(r.data_cust?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_cust),'Customer');
+  if(r.data_cust?.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data_cust),(r.version==='v2')?'Missed':'Customer');
   const stamp=new Date(r.created_at).toISOString().slice(0,10);
   XLSX.writeFile(wb,'BLE_Report_'+r.user_name.replace(/\s+/g,'_')+'_'+stamp+'.xlsx');
 };
