@@ -59,6 +59,9 @@
   .tdesc{color:var(--mut);font-size:13.5px;line-height:1.55}
   .tfoot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;color:var(--blue);font-weight:700;font-size:13.5px}
   .tile.qr .tfoot{color:#7c3aed}
+  .tile.recon::before{background:linear-gradient(135deg,#f5a524,#f24e6e)}
+  .tile.recon .ticon{background:linear-gradient(135deg,#f5a524,#f24e6e);box-shadow:0 10px 22px rgba(245,165,36,.25)}
+  .tile.recon .tfoot{color:#c47e0a}
   .tile.locked .tfoot{color:var(--mut)}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:30px;letter-spacing:.5px;background:rgba(245,165,36,.14);color:#c47e0a}
   .pill.ok{background:rgba(22,179,100,.12);color:var(--green)}
@@ -101,6 +104,15 @@
         <div class="tdesc" style="margin-top:8px">Transaction Report vs Missed Transactions. Maps missed transactions station-wise and state-wise, with Missed % against the device count.</div>
       </div>
       <div class="tfoot">Open Version 2 &rarr;</div>
+    </a>
+
+    <a class="tile recon" href="./recon.html">
+      <div class="ticon">&#9981;</div>
+      <div>
+        <div class="ttitle">Recon Console</div>
+        <div class="tdesc" style="margin-top:8px">Dispenser (DU) &times; App punch reconciliation. Upload the Nozzle and Customer reports, auto-match by station, device and nozzle, review suggested consolidations, and export the Excel report. Saved runs are shared with the team.</div>
+      </div>
+      <div class="tfoot">Open Recon Console &rarr;</div>
     </a>
 
     <a class="tile qr" id="qrtile" href="./qr-management.html">
