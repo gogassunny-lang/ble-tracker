@@ -203,6 +203,60 @@
         <div><div class="tlab" id="tlab">Active</div><div class="tval" id="tval">00h 00m 00s</div></div>
       </div>
       <div class="uinfo" id="uinfo"><div class="uavatar" id="uavatar">?</div><div><div class="uname" id="uname">…</div><div class="urole" id="urole">user</div></div></div>
+      <div class="nsw" id="nsw"><style>
+  .nsw{position:relative;display:inline-block;font-family:inherit;text-align:left}
+  .nsw *{box-sizing:border-box}
+  .nsw-btn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid #e6ebf3;
+    color:#10203a;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;
+    font-family:inherit;line-height:1;transition:.15s;white-space:nowrap}
+  .nsw-btn:hover{border-color:#2f6bff;color:#2f6bff}
+  .nsw-btn .nsw-caret{font-size:9px;opacity:.6;transition:transform .15s}
+  .nsw.nsw-open .nsw-btn{border-color:#2f6bff;color:#2f6bff}
+  .nsw.nsw-open .nsw-btn .nsw-caret{transform:rotate(180deg)}
+  .nsw-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:250px;background:#fff;
+    border:1px solid #e6ebf3;border-radius:14px;box-shadow:0 12px 40px rgba(16,32,58,.18);
+    padding:7px;z-index:99999;display:none}
+  .nsw.nsw-open .nsw-menu{display:block}
+  .nsw-lab{font-size:10.5px;font-weight:800;letter-spacing:.5px;color:#9aa7ba;padding:8px 10px 5px}
+  .nsw-i{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;
+    text-decoration:none;color:#10203a;font-size:13.5px;font-weight:600;transition:.12s}
+  .nsw-i:hover{background:#f4f6fb;text-decoration:none}
+  .nsw-ic{width:22px;text-align:center;font-size:14px;flex:0 0 22px}
+  .nsw-sub{display:block;font-size:11px;font-weight:500;color:#6b7a90;margin-top:1px}
+  .nsw-i.nsw-on{background:rgba(47,107,255,.09);color:#2f6bff;cursor:default}
+  .nsw-i.nsw-on:hover{background:rgba(47,107,255,.09)}
+  .nsw-sep{height:1px;background:#eef2f8;margin:6px 4px}
+  @media(max-width:640px){.nsw-menu{right:auto;left:0;min-width:220px}}
+</style>
+  <button class="nsw-btn" id="nsw-btn" type="button" aria-haspopup="true" aria-expanded="false">Modules <span class="nsw-caret">&#9660;</span></button>
+  <div class="nsw-menu" id="nsw-menu" role="menu">
+    <div class="nsw-lab">GO TO</div>
+    <a class="nsw-i" data-p="index.html" href="./index.html"><span class="nsw-ic">&#127968;</span><span>Platform Home<span class="nsw-sub">All modules</span></span></a>
+    <div class="nsw-sep"></div>
+    <a class="nsw-i" data-p="ble-report.html" href="./ble-report.html"><span class="nsw-ic">&#128225;</span><span>BLE Version 1<span class="nsw-sub">vs Daily Customer Transaction</span></span></a>
+    <a class="nsw-i" data-p="ble-report-v2.html" href="./ble-report-v2.html"><span class="nsw-ic">&#9888;&#65039;</span><span>BLE Version 2<span class="nsw-sub">vs Missed Transactions</span></span></a>
+    <a class="nsw-i" data-p="recon.html" href="./recon.html"><span class="nsw-ic">&#9981;</span><span>Recon Console<span class="nsw-sub">DU &times; App reconciliation</span></span></a>
+    <a class="nsw-i" data-p="qr-management.html" href="./qr-management.html"><span class="nsw-ic">&#128241;</span><span>QR Management<span class="nsw-sub">Shipment tracking</span></span></a>
+    <div class="nsw-sep"></div>
+    <a class="nsw-i" data-p="admin.html" href="./admin.html"><span class="nsw-ic">&#9881;&#65039;</span><span>Admin<span class="nsw-sub">Users, activity &amp; reports</span></span></a>
+  </div>
+  <script>(function(){
+  var here=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  var box=document.getElementById('nsw'),btn=document.getElementById('nsw-btn'),menu=document.getElementById('nsw-menu');
+  if(!box||!btn||!menu)return;
+  Array.prototype.forEach.call(menu.querySelectorAll('.nsw-i'),function(a){
+    if((a.getAttribute('data-p')||'').toLowerCase()===here){a.className='nsw-i nsw-on';a.removeAttribute('href');}
+  });
+  btn.onclick=function(e){e.stopPropagation();
+    var o=box.className.indexOf('nsw-open')<0;
+    box.className=o?'nsw nsw-open':'nsw';
+    btn.setAttribute('aria-expanded',o?'true':'false');};
+  document.addEventListener('click',function(e){
+    if(!box.contains(e.target)){box.className='nsw';btn.setAttribute('aria-expanded','false');}});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){box.className='nsw';btn.setAttribute('aria-expanded','false');}});
+})();</script>
+</div>
       <a class="ulink" id="adminlink" href="./admin.html" style="display:none">Admin</a>
       <button class="ubtn" id="logoutbtn">Sign out</button>
     </div>
